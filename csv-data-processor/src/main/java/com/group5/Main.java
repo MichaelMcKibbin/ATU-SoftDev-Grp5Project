@@ -10,12 +10,8 @@ public class Main {
         System.out.println("This line was added in the example branch!");
         System.out.println("To commit this new code to the main branch, open a Pull Request (PR)");
 
+        exampleClass example = new exampleClass();
+        example.printMessage();
 
-
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
-        }
     }
 }
