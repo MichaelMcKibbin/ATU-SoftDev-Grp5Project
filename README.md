@@ -12,7 +12,7 @@ The **CSV Data Processor** will:
 - Read CSV files with configurable delimiters, quotes, and escape characters.
 - Support type validation via a schema (string, integer, decimal, date, etc.).
 - Handle malformed or missing data through structured error reporting.
-- Stream large CSVs efficiently without high memory use.
+- Stream large CSVs efficiently without incurring high memory use.
 - (Optional) Perform filters, transforms, aggregations, and joins between CSVs.
 
 The goal is to apply **software design principles**, **team collaboration**, and **test-driven development** using modern Java tooling.
@@ -21,22 +21,25 @@ The goal is to apply **software design principles**, **team collaboration**, and
 
 ## Tech Stack
 
-| Component | Tool |
-|------------|------|
-| Language | Java 17+ |
-| Build System | Maven |
-| IDE | IntelliJ IDEA (Community or Ultimate) |
-| Version Control | Git + GitHub |
-| Testing | JUnit 5 + JaCoCo |
+| Component       | Tool                                  |
+|-----------------|---------------------------------------|
+| Language        | Java 17+                              |
+| Build System    | Maven                                 |
+| IDE             | IntelliJ IDEA (Community or Ultimate) |
+| Version Control | Git + GitHub                          |
+| Testing         | JUnit 5 + JaCoCo                      |
 
 ---
 
 ## Team Resources
 
-| Document | Description |
-|-----------|--------------|
-| [**Getting Started Guide**](docs/getting-started.md) | Step-by-step instructions for cloning the repo, creating branches, committing, and pushing using IntelliJ’s Git GUI. |
-| [**Pull Request Workflow**](docs/pull-request-workflow.md) | Explains how to open, review, and merge pull requests in GitHub following the team’s workflow. |
+| Document                                                           | Description                                                                                                          |
+|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| [**Getting Started Guide**](docs/getting-started.md)               | Step-by-step instructions for cloning the repo, creating branches, committing, and pushing using IntelliJ’s Git GUI. |
+| [**Pull Request Workflow**](docs/pull-request-workflow.md)         | Explains how to open, review, and merge pull requests in GitHub following the team’s workflow.                       |
+| [**JaCoCo & JUnit Config**](docs/JaCoCo-and-JUnit-setup-readme.md) | Explains how to confirm correct setup of JaCoCo & JUnit 5.                                                           |
+
+
 
 ---
 
