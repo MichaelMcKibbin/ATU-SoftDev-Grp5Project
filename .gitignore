@@ -1,0 +1,61 @@
+# -------------------------
+# Build output
+# -------------------------
+target/
+out/
+bin/
+
+# Maven wrapper
+# (These lines keep wrapper files INCLUDED, not ignored)
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+# -------------------------
+# IDEs
+# -------------------------
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code
+.vscode/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+# -------------------------
+# OS files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Logs / temp files
+# -------------------------
+*.log
+*.tmp
+*.swp
+*.bak
+
+# -------------------------
+# Coverage / reports
+# -------------------------
+coverage/
+jacoco.exec
+target/site/

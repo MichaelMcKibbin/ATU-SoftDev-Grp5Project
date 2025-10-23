@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ATU-SoftDev-Grp5Project.iml" filepath="$PROJECT_DIR$/.idea/ATU-SoftDev-Grp5Project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/csv-data-processor.iml" filepath="$PROJECT_DIR$/csv-data-processor.iml" />
     </modules>
   </component>
 </project>
