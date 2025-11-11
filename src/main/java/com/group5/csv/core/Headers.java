@@ -86,4 +86,13 @@ public class Headers {
     public int size() {
         return columnNames.size();
     }
+    
+    /**
+     * Gets all column names in their original order.
+     * 
+     * @return unmodifiable list of column names
+     */
+    public List<String> getColumnNames() {
+        return Collections.unmodifiableList(columnNames);
+    }
 }

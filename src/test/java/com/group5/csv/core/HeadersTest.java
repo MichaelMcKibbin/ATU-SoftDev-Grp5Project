@@ -135,4 +135,42 @@ class HeadersTest {
         assertEquals(50, headers.getIndex("column50"));
         assertEquals("column99", headers.getName(99));
     }
+    
+    // getColumnNames() Tests
+    
+    @Test
+    void shouldReturnAllColumnNames() {
+        Headers headers = new Headers(Arrays.asList("id", "name", "age"));
+        List<String> columns = headers.getColumnNames();
+        assertEquals(3, columns.size());
+        assertEquals("id", columns.get(0));
+        assertEquals("name", columns.get(1));
+        assertEquals("age", columns.get(2));
+    }
+    
+    @Test
+    void shouldReturnUnmodifiableList() {
+        Headers headers = new Headers(Arrays.asList("id", "name", "age"));
+        List<String> columns = headers.getColumnNames();
+        assertThrows(UnsupportedOperationException.class, () -> {
+            columns.add("email");
+        });
+    }
+    
+    // Integration Test
+    
+    @Test
+    void shouldWorkInCsvReaderWorkflow() {
+        // Simulate CsvReader creating Headers
+        String csvHeader = "id,name,age,city";
+        List<String> columns = Arrays.asList(csvHeader.split(","));
+        Headers headers = new Headers(columns);
+        
+        // Simulate Row using Headers  
+        String[] rowData = {"1", "Alice", "25", "Dublin"};
+        
+        assertEquals("Alice", rowData[headers.getIndex("name")]);
+        assertEquals("25", rowData[headers.getIndex("age")]);
+        assertEquals("Dublin", rowData[headers.getIndex("city")]);
+    }
 }
