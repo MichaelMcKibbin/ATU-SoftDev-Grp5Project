@@ -188,7 +188,7 @@ public Header(List<String> columnNames)
 **Example**:
 ```java
 List<String> cols = Arrays.asList("id", "name", "age", "city");
-Header header = new Header(cols);
+Headers headers = new Headers(cols);
 ```
 
 ---
@@ -203,7 +203,7 @@ public Header(String... columnNames)
 
 **Example**:
 ```java
-Header header = new Header("id", "name", "age", "city");
+Headers headers = new Headers("id", "name", "age", "city");
 ```
 
 ---
@@ -356,7 +356,7 @@ String[] columns = firstLine.split(",");
 List<String> columnList = Arrays.asList(columns);
 
 // Create Header
-Header header = new Header(columnList);
+Headers headers = new Headers(columnList);
 
 // Now available for all rows
 ```
@@ -366,7 +366,7 @@ Header header = new Header(columnList);
 ```java
 // Row has data and reference to Header
 String[] rowData = {"1", "Alice", "25", "Dublin"};
-Header header = new Header("id", "name", "age", "city");
+Headers headers = new Headers("id", "name", "age", "city");
 
 // User requests: row.get("age")
 int index = header.getIndex("age");     // 2
@@ -376,7 +376,7 @@ String age = rowData[index];            // "25"
 ### Example 3: Schema Validation
 
 ```java
-Header header = new Header("id", "name", "age");
+Headers headers = new Headers("id", "name", "age");
 
 // Check if required columns exist
 List<String> required = Arrays.asList("id", "name", "email");
@@ -391,7 +391,7 @@ try {
 ### Example 4: Writing CSV Header
 
 ```java
-Header header = new Header("id", "name", "age", "city");
+Headers headers = new Headers("id", "name", "age", "city");
 
 // Write header line to file
 StringBuilder line = new StringBuilder();
@@ -519,7 +519,7 @@ try {
 ### Row Class
 ```java
 class Row {
-    private final Header header;
+    private final Headers headers;
     private final String[] data;
     
     public String get(String columnName) {
@@ -534,7 +534,7 @@ class Row {
 class CsvReader {
     public List<Row> read(File file) {
         String firstLine = readFirstLine(file);
-        Header header = new Header(parseColumns(firstLine));
+        Headers headers = new Headers(parseColumns(firstLine));
         
         List<Row> rows = new ArrayList<>();
         for (String line : readRemainingLines(file)) {
@@ -548,7 +548,7 @@ class CsvReader {
 ### Schema Class
 ```java
 class Schema {
-    public void validate(Header header) {
+    public void validate(Headers headers) {
         List<String> required = getRequiredColumns();
         header.validate(required);
     }
@@ -601,7 +601,7 @@ Where:
 
 1. **Case-insensitive mode**
    ```java
-   Header header = new Header(columns, CaseSensitivity.IGNORE);
+   Headers headers = new Headers(columns, CaseSensitivity.IGNORE);
    ```
 
 2. **Column aliases**
@@ -673,7 +673,7 @@ public List<String> getColumnNames() {
 
 ## Questions or Feedback?
 
-If you have questions about the Header class design or suggestions for improvements, please:
+If you have questions about the Headers class design or suggestions for improvements, please:
 - Comment on [Issue #11](https://github.com/MichaelMcKibbin/ATU-SoftDev-Grp5Project/issues/11)
 - Reach out on WhatsApp
 - Discuss in the next team meeting

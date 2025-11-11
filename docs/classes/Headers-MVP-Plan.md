@@ -11,7 +11,7 @@
 
 ### What We're Building
 
-A simple, working Header class that:
+A simple, working Headers class that:
 - Maps column names to indexes
 - Validates input (no nulls, no duplicates)
 - Provides basic lookup methods
@@ -35,7 +35,7 @@ package com.group5.csv.core;
 
 import java.util.*;
 
-public class Header {
+public class Headers {
     private final List<String> columnNames;
     private final Map<String, Integer> nameToIndex;
     
@@ -82,7 +82,7 @@ public int size() { }
 ```java
 // Simulate CsvReader usage
 String[] csvHeader = {"id", "name", "age", "city"};
-Header header = new Header(Arrays.asList(csvHeader));
+Headers headers = new Headers(Arrays.asList(csvHeader));
 
 // Simulate Row usage
 String[] rowData = {"1", "Alice", "25", "Dublin"};
@@ -152,14 +152,14 @@ String age = rowData[ageIndex];  // Should be "25"
 // CsvReader creates Header from first line
 String firstLine = reader.readLine();
 String[] columns = firstLine.split(",");
-Header header = new Header(Arrays.asList(columns));
+Headers headers = new Headers(Arrays.asList(columns));
 ```
 
 ### With Row
 ```java
 // Row uses Header to look up columns
 public class Row {
-    private final Header header;
+    private final Headers headers;
     private final String[] data;
     
     public String get(String columnName) {
