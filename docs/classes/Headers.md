@@ -1,4 +1,4 @@
-# Header Class - Design Documentation
+# Headers Class - Design Documentation
 
 **Author**: Edson Ferreira  
 **Date**: November 11, 2025  
@@ -9,7 +9,7 @@
 
 ## Purpose
 
-The `Header` class manages the mapping between CSV column names and their positional indexes. It provides fast, bidirectional lookup between column names (e.g., "age") and their positions (e.g., column 2).
+The `Headers` class manages the mapping between CSV column names and their positional indexes. It provides fast, bidirectional lookup between column names (e.g., "age") and their positions (e.g., column 2).
 
 **Used by**: `Row`, `CsvReader`, `CsvWriter`, `Schema` for consistent column access, validation, and ordering.
 
@@ -31,9 +31,144 @@ id,name,age,city
 2. **Computer storage**: Data is in arrays: `["1", "Alice", "25", "Dublin"]` (positions)
 3. **Need translation**: "age" → position 2 → value "25"
 
-**Without Header**: Every class would need to search through column names repeatedly (slow, error-prone)
+**Without Headers**: Every class would need to search through column names repeatedly (slow, error-prone)
 
-**With Header**: Centralized, fast lookup service for the entire application
+**With Headers**: Centralized, fast lookup service for the entire application
+
+---
+
+## How Headers Knows the Number of Columns
+
+### The Short Answer
+**Headers doesn't figure it out - CsvReader tells it!**
+
+### The Complete Flow
+
+#### Step 1: CsvReader Reads the First Line
+
+```java
+// CsvReader opens the file
+BufferedReader reader = new BufferedReader(new FileReader("students.csv"));
+
+// Read the very first line
+String firstLine = reader.readLine();
+// firstLine = "id,name,age,city"
+```
+
+#### Step 2: CsvReader Splits the Line into Columns
+
+```java
+// Split by comma
+String[] columns = firstLine.split(",");
+// columns = ["id", "name", "age", "city"]
+
+// How many columns? Check the array length!
+System.out.println(columns.length);  // 4
+```
+
+#### Step 3: CsvReader Creates Headers
+
+```java
+// Convert array to List
+List<String> columnList = Arrays.asList(columns);
+
+// Give it to Headers
+Headers headers = new Headers(columnList);
+```
+
+#### Step 4: Headers Counts What It Receives
+
+```java
+public Headers(List<String> columnNames) {
+    // Headers just counts what it was given
+    this.columnNames = new ArrayList<>(columnNames);
+    
+    // The size is determined by the input
+    // 3 columns? size() returns 3
+    // 30 columns? size() returns 30
+}
+```
+
+### Visual Example
+
+**CSV with 3 Columns**:
+```csv
+id,name,age
+1,Alice,25
+```
+
+**What happens**:
+```
+File → CsvReader reads "id,name,age"
+     → Split by comma: ["id", "name", "age"]
+     → Array length: 3
+     → Headers receives List with 3 items
+     → headers.size() returns 3
+```
+
+**CSV with 30 Columns**:
+```csv
+id,name,age,city,email,phone,address,zip,country,state,...(20 more)
+1,Alice,25,Dublin,...
+```
+
+**What happens**:
+```
+File → CsvReader reads entire first line
+     → Split by comma: ["id", "name", "age", ..., "column30"]
+     → Array length: 30
+     → Headers receives List with 30 items
+     → headers.size() returns 30
+```
+
+### Key Insight: Separation of Concerns
+
+**Headers is "dumb" in a good way!**
+
+It doesn't:
+- ❌ Read files
+- ❌ Parse CSV
+- ❌ Count commas
+- ❌ Guess the structure
+
+It only:
+- ✅ Receives a list of column names
+- ✅ Stores them
+- ✅ Provides lookup methods
+
+**This is called "Separation of Concerns"**:
+- **CsvReader's job**: Read files, parse CSV, handle commas/quotes
+- **Headers' job**: Map column names to indexes
+
+### Why This Design is Smart
+
+**1. Flexibility** - Works with any number of columns:
+```java
+Headers small = new Headers("id", "name");              // 2 columns
+Headers medium = new Headers("id", "name", "age", ...); // 10 columns
+Headers large = new Headers(...);                       // 100 columns
+```
+
+**2. Testability** - Can test without reading files:
+```java
+@Test
+void shouldHandleThreeColumns() {
+    Headers headers = new Headers("id", "name", "age");
+    assertEquals(3, headers.size());
+}
+```
+
+**3. Reusability** - Can be used in different contexts:
+```java
+// From CSV file
+Headers fromFile = csvReader.getHeaders();
+
+// From database query
+Headers fromDB = new Headers(resultSet.getColumnNames());
+
+// From API response
+Headers fromAPI = new Headers(jsonObject.keys());
+```
 
 ---
 
@@ -178,7 +313,7 @@ Key (Name)    →    Value (Index)
 ### Constructor
 
 ```java
-public Header(List<String> columnNames)
+public Headers(List<String> columnNames)
 ```
 **Purpose**: Create Header from a list of column names (from CSV reader)
 
@@ -194,7 +329,7 @@ Headers headers = new Headers(cols);
 ---
 
 ```java
-public Header(String... columnNames)
+public Headers(String... columnNames)
 ```
 **Purpose**: Create Header from varargs (convenient for testing/manual creation)
 
@@ -226,7 +361,7 @@ public int getIndex(String columnName)
 
 **Example**:
 ```java
-int index = header.getIndex("age");  // Returns: 2
+int index = headers.getIndex("age");  // Returns: 2
 String value = rowData[index];       // Get value at position 2
 ```
 
@@ -250,7 +385,7 @@ public String getName(int index)
 
 **Example**:
 ```java
-String colName = header.getName(2);  // Returns: "age"
+String colName = headers.getName(2);  // Returns: "age"
 System.out.println("Error in column: " + colName);
 ```
 
@@ -272,7 +407,7 @@ public boolean contains(String columnName)
 
 **Example**:
 ```java
-if (header.contains("email")) {
+if (headers.contains("email")) {
     // Process email column
 } else {
     // Email column is optional
@@ -294,7 +429,7 @@ public int size()
 
 **Example**:
 ```java
-int numColumns = header.size();  // Returns: 4
+int numColumns = headers.size();  // Returns: 4
 ```
 
 **Use case**: Validation (ensure row has correct number of fields), iteration bounds
@@ -337,7 +472,7 @@ public void validate(List<String> requiredColumns)
 **Example**:
 ```java
 List<String> required = Arrays.asList("id", "name", "email");
-header.validate(required);
+headers.validate(required);
 // Throws exception if "email" is missing
 ```
 
@@ -369,7 +504,7 @@ String[] rowData = {"1", "Alice", "25", "Dublin"};
 Headers headers = new Headers("id", "name", "age", "city");
 
 // User requests: row.get("age")
-int index = header.getIndex("age");     // 2
+int index = headers.getIndex("age");     // 2
 String age = rowData[index];            // "25"
 ```
 
@@ -381,7 +516,7 @@ Headers headers = new Headers("id", "name", "age");
 // Check if required columns exist
 List<String> required = Arrays.asList("id", "name", "email");
 try {
-    header.validate(required);
+    headers.validate(required);
 } catch (IllegalArgumentException e) {
     System.out.println("Missing columns: " + e.getMessage());
     // Output: "Missing columns: email"
@@ -395,7 +530,7 @@ Headers headers = new Headers("id", "name", "age", "city");
 
 // Write header line to file
 StringBuilder line = new StringBuilder();
-for (String col : header.getColumnNames()) {
+for (String col : headers.getColumnNames()) {
     line.append(col).append(",");
 }
 // Output: "id,name,age,city,"
@@ -408,7 +543,7 @@ for (String col : header.getColumnNames()) {
 try {
     int value = Integer.parseInt(rowData[2]);
 } catch (NumberFormatException e) {
-    String colName = header.getName(2);
+    String colName = headers.getName(2);
     System.out.println("Invalid number in column '" + colName + "': " + rowData[2]);
     // Output: "Invalid number in column 'age': abc"
 }
@@ -523,7 +658,7 @@ class Row {
     private final String[] data;
     
     public String get(String columnName) {
-        int index = header.getIndex(columnName);
+        int index = headers.getIndex(columnName);
         return data[index];
     }
 }
@@ -550,7 +685,7 @@ class CsvReader {
 class Schema {
     public void validate(Headers headers) {
         List<String> required = getRequiredColumns();
-        header.validate(required);
+        headers.validate(required);
     }
 }
 ```
@@ -627,7 +762,7 @@ Where:
 ### Constructor with Validation
 
 ```java
-public Header(List<String> columnNames) {
+public Headers(List<String> columnNames) {
     // Validate input
     if (columnNames == null || columnNames.isEmpty()) {
         throw new IllegalArgumentException("Column names cannot be null or empty");
