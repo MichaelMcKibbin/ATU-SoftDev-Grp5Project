@@ -165,8 +165,87 @@ public final class CsvFormat {
      *  - Unix newlines ("\n")
      *  - Quote only when required
      *
-     * This is compatible with Excel, Google Sheets, and most parsers.
+     * This is compatible with RFC-4180
      */
     public static CsvFormat rfc4180() { return builder().build(); }
 
+    /** Excel format */
+    public static CsvFormat excel() {
+        return builder()
+                .newline("\r\n")
+                .skipWhitespaceBeforeQuotedField(true)
+                .build();
+    }
+
+    /** Excel with semicolon as a  delimiter */
+    public static CsvFormat excel_semicolon() {
+        return builder()
+                .newline("\r\n")
+                .delimiter(';')
+                .skipWhitespaceBeforeQuotedField(true)
+                .build();
+    }
+
+    /** Lenient interpretation of CSV that used in JavaScript, Node.js, or JSON-based web tools */
+    public static CsvFormat json_csv() {
+        return builder()
+                .newline("\n")
+                .delimiter(',')
+                .escapeChar('\\')
+                .doubleQuoteEnabled(false)
+                .trimUnquotedFields(true)
+                .skipWhitespaceBeforeQuotedField(true)
+                .allowUnescapedQuotes(true)
+                .allowUnbalancedQuotes(true)
+                .build();
+    }
+
+    /** Tab Separated values */
+    public static CsvFormat tsv() {
+        return builder()
+                .newline("\n")
+                .delimiter('\t')
+                .escapeChar(NO_ESCAPE)
+                .quoteChar(NO_QUOTE)
+                .doubleQuoteEnabled(false)
+                .trimUnquotedFields(false)
+                .skipWhitespaceBeforeQuotedField(false)
+                .allowUnescapedQuotes(true)
+                .allowUnbalancedQuotes(true)
+                .build();
+    }
+
+    // --- Utility ---
+    @Override
+    public String toString() {
+        return "CsvFormat{" +
+                "delimiter=" + printableChar(delimiter) +
+                ", quoteChar=" + printableChar(quoteChar) +
+                ", escapeChar=" + printableChar(escapeChar) +
+//                ", escapeChar2=" + printableChar(escapeChar2) +
+                ", doubleQuoteEnabled=" + doubleQuoteEnabled +
+                ", trimUnquotedFields=" + trimUnquotedFields +
+                ", skipWhitespaceBeforeQuotedField=" + skipWhitespaceBeforeQuotedField +
+                ", allowUnescapedQuotes=" + allowUnescapedQuotes +
+                ", allowUnbalancedQuotes=" + allowUnbalancedQuotes +
+                ", alwaysQuote=" + alwaysQuote +
+                ", newline=" + printableLineSeparator(newline) +
+                '}';
+    }
+
+    // Helper function for internal use in toString()
+    private static String printableChar(char c) {
+        return switch (c) {
+            case '\t' -> "'\\t'";
+            case '\n' -> "'\\n'";
+            case '\r' -> "'\\r'";
+            case '\0' -> "'\\0'";
+            default -> "'" + c + "'";
+        };
+    }
+
+    // Helper function for internal use in toString()
+    private static String printableLineSeparator(String sep) {
+        return sep.replace("\r", "\\r").replace("\n", "\\n");
+    }
 }
