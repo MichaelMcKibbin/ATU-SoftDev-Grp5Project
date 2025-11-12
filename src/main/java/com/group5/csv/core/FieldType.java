@@ -2,6 +2,7 @@ package com.group5.csv.core;
 
 import com.group5.csv.schema.DecimalSpec;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public enum FieldType {
 
@@ -26,11 +27,14 @@ public enum FieldType {
 
     DATETIME {
         @Override public Object parse(String raw, Field field) {
-            return field.dateTimeSpec().parse(raw); // if you have DateTimeSpec
+            // This probably returns a LocalDateTime (check DateTimeSpec)
+            return field.dateTimeSpec().parse(raw);
         }
         @Override public String format(Object value, Field field) {
-            return field.dateTimeSpec().format(value);
+            if (value == null) return "";
+            return field.dateTimeSpec().format((LocalDateTime) value);
         }
+
     },
 
     BOOLEAN {
