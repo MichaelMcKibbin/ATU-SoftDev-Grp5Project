@@ -1,2 +1,12 @@
 package com.group5.csv.core;
-public class Field { }
+
+import com.group5.csv.schema.DecimalSpec;
+import com.group5.csv.schema.DateTimeSpec;
+
+public interface Field {
+    FieldType type();
+
+    // Only required for matching types; others can return null or throw if misused
+    default DecimalSpec decimalSpec() { throw new UnsupportedOperationException(); }
+    default DateTimeSpec dateTimeSpec() { throw new UnsupportedOperationException(); }
+}
