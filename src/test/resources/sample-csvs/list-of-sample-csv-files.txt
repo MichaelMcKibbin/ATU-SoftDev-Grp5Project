@@ -1,0 +1,64 @@
+FSU Sample Files:
+
+addresses.csv, an example file with 6 records. There are 6 fields.
+airtravel.csv, Monthly transatlantic airtravel, in thousands of passengers, for 1958-1960. There are 4 fields, "Month", "1958", "1959" and "1960" and 12 records, "JAN" through "DEC". There is also an initial header line.
+biostats.csv, biometric statistics for a group of office workers. There are 18 records, recording Name, Sex, Age, Height, Weight There is an initial header line.
+cities.csv, an example file with 128 records. There are 10 fields.
+crash_catalonia.csv, number of car crashes in Catalonia from 2000 to 2011, by day of week. There are 7 records, with two values each. There is also an initial header line.
+deniro.csv, Rotten Tomato ratings of movies with Robert De Niro. There are 87 records. Each record has Year, Rating, Titlte. There is also an initial header line.
+example.csv, an example file with 1 record. There are 78 values per record. There is also an initial header line.
+ford_escort.csv, used Ford Escorts for sale. There are 23 records of year, mileage and price. There is also an initial header line.
+faithful.csv, Old Faithful geyser: index, time between eruptions, and length of eruption. 272 records, each with three values. There is also an initial header line.
+freshman_kgs.csv, Sex, September weight (kgs), April weight (kgs), September BMI, April BMI, for 67 college freshmen. There is also an initial header line.
+freshman_lbs.csv, Sex, September weight (lbs), April weight (lbs), September BMI, April BMI, for 67 college freshmen. There is also an initial header line.
+grades.csv, an example file with 16 records and 9 fields: First name, Last Name, SSN, Test1, Test2, Test3, Test4, Final, Grade. There is also an initial header line.
+homes.csv, Home sale statistics. Fifty home sales, with selling price, asking price, living space, rooms, bedrooms, bathrooms, age, acreage, taxes. There is also an initial header line.
+hooke.csv, Hooke's Law demo. A spring experiment is carried out twice. Spring 1 and spring 2 are loaded with 0, 1, 2, ..., 9 equal weights and their lengths are measured. Each record contains the index, weight, spring 1 length and spring 2 length. There is also an initial header line.
+hurricanes.csv, hurricane and tropical storm counts for 2005-2015. Each record includes 13 values: month, historical average, counts for 2005 through 2015. Eight records are stored, for months "May" through "Dec". There is also an initial header line.
+hw_200.csv, height and weight for 200 individuals Each record includes 3 values: index, height (inches), weight (pounds). There is also an initial header line.
+hw_25000.csv, height and weight for 25000 individuals Each record includes 3 values: index, height (inches), weight (pounds). There is also an initial header line.
+lead_shot.csv, For each grade of lead shot, a record lists the grade name, the weight in ounces, weight in grams, diameter in inches, diameter in millimeters, and the number of pellets per ounce. There are 25 records. There is also an initial header line.
+letter_frequency.csv, In a large text, the frequency and percentage frequency of each of the 26 letters of the alphabet was determined. There are 26 records, each with three values. There is also an initial header line.
+mlb_players.csv, Major League Baseball Players: Name, Team, Position, height (inches), weight (pounds), age (years). 1034 records, each with six values. There is also an initial header line.
+mlb_teams_2012.csv, Major League Baseball 2012 Season: Team, Payroll(millions), Wins. 30 records, each with 3 values. There is also an initial header line.
+news_decline.csv, average nightly viewship for 6 TV news magazines for 2009-2011. Each record includes 4 values: show name, 2009, 2010, 2011. Six records are stored, for "60 Minutes", "48 Hours Mystery", "20/20", "Nightline", "Dateline Friday", and "Dateline Sunday". There is also an initial header line.
+nile.csv, Nile flood data; 570 records, each with 2 values: year index, maximum height of Nile flood. There is also an initial header line.
+oscar_age_female.csv, age of female Oscar winners; 89 records: index, age, name, movie. There is also an initial header line.
+oscar_age_male.csv, age of male Oscar winners; 89 records: index, age, name, movie. There is also an initial header line.
+snakes_count_10.csv, game length for one-player version of Snakes and Ladders, 10 records, each with 2 values: Game Index, Game Length. There is also an initial header line.
+snakes_count_100.csv, game length for one-player version of Snakes and Ladders, 100 records, each with 2 values: Game Index, Game Length. There is also an initial header line.
+snakes_count_1000.csv, game length for one-player version of Snakes and Ladders, 1000 records, each with 2 values: Game Index, Game Length. There is also an initial header line.
+snakes_count_10000.csv, game length for one-player version of Snakes and Ladders, 10000 records, each with 2 values: Game Index, Game Length. There is also an initial header line.
+tally_cab.csv, Tallahassee Cab Fares, 8 records, each with 2 values: Distance(miles), Fare($). There is also an initial header line.
+taxables.csv, Taxable items, 10 records: index, item name, price, tax, price plus tax. There is also an initial header line.
+trees.csv, Tree measurements, 31 records: index, circumference (in), height (ft), volume (ft^3). There is also an initial header line.
+zillow.csv, Tallahassee Housing Prices as reported by Zillow, 20 records: Index, Square footage, beds, baths, zip code, year, list price. There is also an initial header line.
+
+
+---------------------
+
+IBM samples
+
+Catalog
+DemandPlan
+Inventory
+InventoryLot
+Location
+LocationGroup
+Order
+OrderAllocation
+OrderLine
+Organization
+Product
+Shipment
+ShipmentLine
+SupplyPlan
+
+-----------------------
+Microsoft sample
+
+Import_User_Sample_en.csv
+
+-----------------------
+
+
