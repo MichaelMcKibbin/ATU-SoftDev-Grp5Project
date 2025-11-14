@@ -43,14 +43,14 @@ public class Main {
         String path = sc.nextLine().trim();
         Path p = Paths.get(path);
         if (!Files.exists(p)) {
-            System.out.println("File not found. (CsvReader not implemented yet.)");
+            System.out.println("File not found. (CsvReader not fully implemented yet.)");
             return;
         }
         try {
             List<String> lines = Files.readAllLines(p); // placeholder
             System.out.printf("Read %d line(s). Showing up to 5:%n", lines.size());
             lines.stream().limit(5).forEach(System.out::println);
-            System.out.println("\nNote: This is a placeholder preview. CsvReader integration pending.");
+            System.out.println("\nNote: This is a placeholder preview. Full CsvReader integration pending.");
         } catch (IOException e) {
             System.out.println("Could not read file (placeholder mode): " + e.getMessage());
         }
@@ -61,7 +61,7 @@ public class Main {
         Path out = Paths.get("demo_output.csv");
         try {
             Files.write(out, List.of("id,name,age", "1,John,20", "2,Bob,30"));
-            System.out.println("Created demo_output.csv (placeholder). CsvWriter integration pending.");
+            System.out.println("Created demo_output.csv (placeholder). Full CsvWriter integration pending.");
         } catch (IOException e) {
             System.out.println("Could not write demo_output.csv (placeholder mode): " + e.getMessage());
         }
