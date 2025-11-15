@@ -50,7 +50,7 @@ public class Main {
             List<String> lines = Files.readAllLines(p); // placeholder
             System.out.printf("Read %d line(s). Showing up to 5:%n", lines.size());
             lines.stream().limit(5).forEach(System.out::println);
-            System.out.println("\nNote: This is a placeholder preview. Full CsvReader integration pending. This message created in Main");
+            System.out.println("\nNote: This is a placeholder preview. Full CsvReader integration pending.");
         } catch (IOException e) {
             System.out.println("Could not read file (placeholder mode): " + e.getMessage());
         }
@@ -61,7 +61,7 @@ public class Main {
         Path out = Paths.get("demo_output.csv");
         try {
             Files.write(out, List.of("id,name,age", "1,John,20", "2,Bob,30"));
-            System.out.println("Created demo_output.csv (placeholder). CsvWriter integration pending.");
+            System.out.println("Created demo_output.csv (placeholder). Full CsvWriter integration pending.");
         } catch (IOException e) {
             System.out.println("Could not write demo_output.csv (placeholder mode): " + e.getMessage());
         }
