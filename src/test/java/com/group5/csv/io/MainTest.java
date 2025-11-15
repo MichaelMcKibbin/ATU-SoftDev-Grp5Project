@@ -1,4 +1,4 @@
-package com.group5;
+package com.group5.csv.io;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
