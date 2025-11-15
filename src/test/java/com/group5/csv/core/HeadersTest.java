@@ -50,6 +50,85 @@ class HeadersTest {
         });
     }
     
+    // Whitespace Trimming Tests
+    
+    @Test
+    void shouldTrimLeadingWhitespace() {
+        Headers headers = new Headers(Arrays.asList("  id", "name", "age"));
+        assertEquals(0, headers.getIndex("id"));
+        assertEquals("id", headers.getName(0));
+    }
+    
+    @Test
+    void shouldTrimTrailingWhitespace() {
+        Headers headers = new Headers(Arrays.asList("id  ", "name", "age"));
+        assertEquals(0, headers.getIndex("id"));
+        assertEquals("id", headers.getName(0));
+    }
+    
+    @Test
+    void shouldTrimBothSidesWhitespace() {
+        Headers headers = new Headers(Arrays.asList("  id  ", "  name  ", "  age  "));
+        assertEquals("id", headers.getName(0));
+        assertEquals("name", headers.getName(1));
+        assertEquals("age", headers.getName(2));
+    }
+    
+    @Test
+    void shouldDetectDuplicatesAfterTrimming() {
+        List<String> columns = Arrays.asList("id", "  id  ", "name");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    // Case-Insensitive Lookup Tests
+    
+    @Test
+    void shouldFindColumnWithDifferentCase() {
+        Headers headers = new Headers(Arrays.asList("id", "Name", "AGE"));
+        assertEquals(0, headers.getIndex("ID"));
+        assertEquals(1, headers.getIndex("name"));
+        assertEquals(2, headers.getIndex("age"));
+    }
+    
+    @Test
+    void shouldContainColumnWithDifferentCase() {
+        Headers headers = new Headers(Arrays.asList("id", "Name", "AGE"));
+        assertTrue(headers.contains("ID"));
+        assertTrue(headers.contains("name"));
+        assertTrue(headers.contains("age"));
+    }
+    
+    @Test
+    void shouldDetectDuplicatesIgnoringCase() {
+        List<String> columns = Arrays.asList("id", "Name", "ID");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    @Test
+    void shouldPreserveOriginalCaseInGetName() {
+        Headers headers = new Headers(Arrays.asList("ID", "Name", "AGE"));
+        assertEquals("ID", headers.getName(0));
+        assertEquals("Name", headers.getName(1));
+        assertEquals("AGE", headers.getName(2));
+    }
+    
+    // Combined Whitespace + Case Tests
+    
+    @Test
+    void shouldTrimAndIgnoreCaseTogether() {
+        Headers headers = new Headers(Arrays.asList("  ID  ", "  Name  ", "  AGE  "));
+        assertEquals(0, headers.getIndex("id"));
+        assertEquals(1, headers.getIndex("name"));
+        assertEquals(2, headers.getIndex("age"));
+        assertEquals("ID", headers.getName(0));
+        assertEquals("Name", headers.getName(1));
+        assertEquals("AGE", headers.getName(2));
+    }
+    
     // getIndex() Tests
     
     @Test
