@@ -43,7 +43,7 @@ public final class CsvWriter implements AutoCloseable {
         printer.printRow(outRow);
     }
 
-    /** Write from a typed Row (adapt to your Row API). */
+    /** Write from a typed Row (adapt to Row API). */
     public void writeRow(RowLike row) throws IOException {
         writeHeaderIfNeeded();
         List<String> outRow = new ArrayList<>(fields.size());
@@ -57,14 +57,19 @@ public final class CsvWriter implements AutoCloseable {
 
     private String formatField(Object value, Field field) {
         FieldType t = field.type();
-        // Delegate to FieldType.format – this preserves round-trip with your parser
+        // Delegate to FieldType.format – this preserves round-trip with CsvParser
         return t.format(value, field);
     }
 
     public void flush() throws IOException { printer.flush(); }
     @Override public void close() throws IOException { printer.close(); }
 
-    /** Replace with your real Row type or Map-based writing only. */
+    /**
+     * Lightweight adapter interface so CsvWriter can work with
+     * whatever Row implementation we have (schema-based, etc.).
+     *
+     * In future, this will likely be replaced by the real Row type.
+     */
     public interface RowLike {
         Object get(int index);
     }
