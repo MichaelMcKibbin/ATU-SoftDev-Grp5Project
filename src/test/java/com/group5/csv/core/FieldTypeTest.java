@@ -332,7 +332,12 @@ class FieldTypeTest {
     
     @Nested
     class DateTypeTests {
-        private final DateSpec spec = new DateSpec();
+        private final DateSpec spec = new DateSpec(
+            new DateTimeSpec.Builder()
+                .acceptPresets("ISO_LOCAL_DATE", "EU_DMY", "US_MDY")
+                .allowBlank(true)  // Allow null/blank
+                .build()
+        );
         private final Field field = new MockField(FieldType.DATE, spec);
         
         @Test
@@ -365,6 +370,7 @@ class FieldTypeTest {
     class DateTimeTypeTests {
         private final DateTimeSpec spec = new DateTimeSpec.Builder()
             .acceptPresets("ISO_LOCAL_DATE_TIME")
+            .allowBlank(true)  // Allow null/blank
             .build();
         private final Field field = new MockField(FieldType.DATETIME, spec);
         
