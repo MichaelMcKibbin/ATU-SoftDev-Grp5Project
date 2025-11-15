@@ -99,6 +99,14 @@ class ValidatorsTest {
     // ---------------------------------------------------------------------
 
     @Test
+    void lengthRejectsInvalidBoundaries() { // Validate defensive checks: length() must fail fast on impossible ranges.
+        assertThrows(IllegalArgumentException.class,
+                () -> Validators.length(-1, 5));
+        assertThrows(IllegalArgumentException.class,
+                () -> Validators.length(10, 5));
+    }
+
+    @Test
     void lengthRejectsOutOfRange() {
         Validator<String> v = Validators.length(2, 4);
 

@@ -112,7 +112,7 @@ public final class Validators {
      */
     public static Validator<String> length(int min, int max) {
         if (min < 0 || max < min) {
-            throw new IllegalArgumentException("Invalid length boundries. Limits are: min=" + min + ", max=" + max);
+            throw new IllegalArgumentException("Invalid length boundaries. Limits are: min=" + min + ", max=" + max);
         }
         return value -> {
             if (value == null) return;
