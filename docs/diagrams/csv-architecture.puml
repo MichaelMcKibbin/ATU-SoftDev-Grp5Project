@@ -1,0 +1,100 @@
+@startuml CSV Data Processor Architecture
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #E8F4F8
+skinparam classBorderColor #2C5F77
+skinparam arrowColor #2C5F77
+
+title CSV Data Processor - Class Interaction Flow
+
+' Classes
+class InputStreamDetector {
+  + detectAndWrap(InputStream): Reader
+  ..
+  Removes BOM from UTF files
+}
+
+class CsvReader {
+  - fullFileAddress: String
+  - rows: ArrayList<String>
+  ..
+  + CsvReader(String, ArrayList)
+  + makeAndRead(String, ArrayList)
+  ..
+  Opens file, coordinates reading
+}
+
+class CsvConfig {
+  - format: CsvFormat
+  - hasHeader: boolean
+  - charset: Charset
+  - skipEmptyLines: boolean
+  ..
+  + getFormat(): CsvFormat
+  + hasHeader(): boolean
+  ..
+  Configuration settings
+}
+
+class CsvFormat {
+  + delimiter: char
+  + quoteChar: char
+  + newline: String
+  + alwaysQuote: boolean
+  ..
+  + rfc4180(): CsvFormat
+  + excel(): CsvFormat
+  + tsv(): CsvFormat
+  ..
+  Defines CSV dialect rules
+}
+
+class CsvParser {
+  - format: CsvFormat
+  - in: PushbackReader
+  ..
+  + readRow(): List<String>
+  ..
+  State machine parser
+}
+
+class Headers {
+  - columnNames: List<String>
+  - nameToIndex: Map<String, Integer>
+  ..
+  + getIndex(String): int
+  + getName(int): String
+  + contains(String): boolean
+  + size(): int
+  ..
+  Maps column names to indexes
+}
+
+' Flow relationships
+InputStreamDetector -down-> CsvReader : "Provide Reader"
+CsvReader -right-> CsvConfig : "uses"
+CsvConfig -down-> CsvFormat : "contains"
+CsvReader -down-> CsvParser : "Create parser"
+CsvParser -up-> CsvFormat : "uses"
+CsvParser -down-> Headers : "First row creates"
+
+' Notes
+note right of InputStreamDetector
+  Handles UTF-8, UTF-16, UTF-32
+  Byte Order Marks (BOM)
+end note
+
+note right of CsvParser
+  Finite State Machine:
+  START_ROW, START_CELL
+  INSIDE_QUOTED, INSIDE_UNQUOTED
+  AFTER_QUOTE
+end note
+
+note right of Headers
+  Your contribution!
+  O(1) lookup performance
+  List + Map data structures
+end note
+
+@enduml

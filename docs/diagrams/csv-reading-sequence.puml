@@ -1,0 +1,72 @@
+@startuml CSV Reading Sequence
+!theme plain
+skinparam backgroundColor #FFFFFF
+
+title CSV Data Processor - Reading Flow Sequence
+
+actor User
+participant "CSV File" as File
+participant InputStreamDetector as Detector
+participant CsvReader as Reader
+participant CsvConfig as Config
+participant CsvFormat as Format
+participant CsvParser as Parser
+participant Headers
+participant "Application" as App
+
+User -> File: Open "students.csv"
+activate File
+
+User -> Config: Create configuration
+activate Config
+Config -> Format: Use rfc4180()
+activate Format
+Format --> Config: CSV dialect rules
+deactivate Format
+Config --> User: Config ready
+deactivate Config
+
+User -> Reader: new CsvReader(path, rows)
+activate Reader
+
+Reader -> File: Open file stream
+File --> Reader: InputStream
+
+Reader -> Detector: detectAndWrap(stream)
+activate Detector
+Detector -> Detector: Check for BOM
+Detector --> Reader: Reader (BOM removed)
+deactivate Detector
+
+Reader -> Parser: new CsvParser(format, reader)
+activate Parser
+
+Reader -> Parser: readRow() [first row]
+Parser -> Parser: Parse: "id,name,age,city"
+Parser --> Reader: ["id", "name", "age", "city"]
+
+Reader -> Headers: new Headers(firstRow)
+activate Headers
+Headers -> Headers: Build List + Map
+Headers --> Reader: Headers ready
+note right: "id"→0, "name"→1\n"age"→2, "city"→3
+
+Reader -> Parser: readRow() [data row]
+Parser -> Parser: Parse: "1,Alice,25,Dublin"
+Parser --> Reader: ["1", "Alice", "25", "Dublin"]
+
+Reader --> User: Rows + Headers
+deactivate Parser
+deactivate Reader
+
+User -> App: Process data
+activate App
+App -> Headers: getIndex("age")
+Headers --> App: 2
+App -> App: Get value at index 2
+App --> User: "Alice is 25 years old"
+deactivate App
+deactivate Headers
+deactivate File
+
+@enduml
