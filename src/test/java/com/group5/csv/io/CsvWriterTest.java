@@ -4,6 +4,7 @@ import com.group5.csv.core.Field;
 import com.group5.csv.core.FieldType;
 import org.junit.jupiter.api.Test;
 
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -147,5 +148,57 @@ class CsvWriterTest {
 //    assertTrue(sw.toString().contains("12.35"));
 //    assertTrue(sw.toString().contains("2024"));
 //}
+
+//    /**
+//     * ROUND TRIP TEST
+//     */
+//    @Test
+//    void writerAndParserRoundTripSimpleRow() throws Exception {
+//        // ---------- Arrange: build CSV in memory via CsvWriter ----------
+//        StringWriter sw = new StringWriter();
+//        CsvFormat format = CsvFormat.rfc4180();
+//
+//        // Adjust this constructor if your Field API differs
+//        List<Field> fields = List.of(
+//                new Field("id",   FieldType.STRING),
+//                new Field("name", FieldType.STRING),
+//                new Field("note", FieldType.STRING)
+//        );
+//        List<String> headers = List.of("id", "name", "note");
+//
+//        CsvWriter writer = new CsvWriter(sw, fields, headers, format);
+//
+//        Map<String, Object> rowData = Map.of(
+//                "id", "1",
+//                "name", "Alice, Bob",            // contains comma → should be quoted
+//                "note", "He said \"Hi\""         // contains quotes → should be escaped
+//        );
+//
+//        writer.writeRow(rowData);
+//        writer.close();
+//
+//        String csv = sw.toString();
+//        assertFalse(csv.isEmpty(), "Writer should produce some CSV output");
+//
+//        // ---------- Act: parse it back with CsvParser ----------
+//        StringReader sr = new StringReader(csv);
+//        CsvParser parser = new CsvParser(format, sr);
+//
+//        List<String> headerRow = parser.readRow();
+//        List<String> dataRow   = parser.readRow();
+//        List<String> eofRow    = parser.readRow(); // should be null at end
+//
+//        // ---------- Assert: header round-trip ----------
+//        assertNotNull(headerRow, "Header row should not be null");
+//        assertEquals(headers, headerRow, "Header row should round-trip exactly");
+//
+//        // ---------- Assert: data row round-trip ----------
+//        assertNotNull(dataRow, "Data row should not be null");
+//        assertEquals("1",           dataRow.get(0));
+//        assertEquals("Alice, Bob",  dataRow.get(1));
+//        assertEquals("He said \"Hi\"", dataRow.get(2));
+//
+//        assertNull(eofRow, "Parser should return null after the last row");
+//    }
 
 }
