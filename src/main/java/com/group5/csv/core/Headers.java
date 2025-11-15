@@ -15,6 +15,8 @@ public class Headers {
     
     /**
      * Creates a Headers instance from a list of column names.
+     * Column names are trimmed of leading/trailing whitespace.
+     * Lookup is case-insensitive for better user experience.
      * 
      * @param columnNames ordered list of column names from CSV header
      * @throws IllegalArgumentException if columnNames is null, empty, contains null, or has duplicates
@@ -24,7 +26,7 @@ public class Headers {
             throw new IllegalArgumentException("Column names cannot be null or empty");
         }
         
-        this.columnNames = new ArrayList<>(columnNames);
+        this.columnNames = new ArrayList<>();
         this.nameToIndex = new HashMap<>();
         
         for (int i = 0; i < columnNames.size(); i++) {
@@ -32,22 +34,29 @@ public class Headers {
             if (name == null) {
                 throw new IllegalArgumentException("Column name cannot be null");
             }
-            if (nameToIndex.containsKey(name)) {
-                throw new IllegalArgumentException("Duplicate column name: " + name);
+            
+            String trimmed = name.trim();
+            String normalized = trimmed.toLowerCase();
+            
+            if (nameToIndex.containsKey(normalized)) {
+                throw new IllegalArgumentException("Duplicate column name: " + trimmed);
             }
-            nameToIndex.put(name, i);
+            
+            this.columnNames.add(trimmed);
+            nameToIndex.put(normalized, i);
         }
     }
     
     /**
      * Gets the positional index of a column by its name.
+     * Lookup is case-insensitive for better user experience.
      * 
      * @param columnName the name of the column to find
      * @return the zero-based index of the column
      * @throws IllegalArgumentException if column doesn't exist
      */
     public int getIndex(String columnName) {
-        Integer index = nameToIndex.get(columnName);
+        Integer index = nameToIndex.get(columnName.toLowerCase());
         if (index == null) {
             throw new IllegalArgumentException("Column not found: " + columnName);
         }
@@ -70,12 +79,13 @@ public class Headers {
     
     /**
      * Checks if a column exists in the headers.
+     * Lookup is case-insensitive for better user experience.
      * 
      * @param columnName the name of the column to check
      * @return true if column exists, false otherwise
      */
     public boolean contains(String columnName) {
-        return nameToIndex.containsKey(columnName);
+        return nameToIndex.containsKey(columnName.toLowerCase());
     }
     
     /**
