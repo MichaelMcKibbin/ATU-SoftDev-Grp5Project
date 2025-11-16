@@ -1,4 +1,4 @@
-# Rows Class - Design Documentation
+# Row Class - Design Documentation
 
 **Author**: Edson Ferreira  
 **Date**: November 15, 2025  
@@ -9,11 +9,11 @@
 
 ## What It Does
 
-Rows represents one row of CSV data. It works with Headers to let you access values by column name.
+Row represents one row of CSV data. It works with Headers to let you access values by column name.
 
 ```java
 Headers headers = new Headers("id", "name", "age");
-Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+Row row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
 
 String name = row.get("name");  // "Alice"
 String age = row.get(2);        // "25" (by index)
@@ -64,7 +64,7 @@ id,name,age
 ```
 
 ```java
-Rows row = new Rows(headers, Arrays.asList("1", "Alice", null));
+Row row = new Rows(headers, Arrays.asList("1", "Alice", null));
 assertNull(row.get("age"));  // null = missing
 ```
 
@@ -131,7 +131,7 @@ public Headers getHeaders()          // Associated headers
 ### Basic Access
 ```java
 Headers headers = new Headers("id", "name", "age");
-Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+Row row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
 
 row.get("name");   // "Alice"
 row.get(0);        // "1"
@@ -140,7 +140,7 @@ row.size();        // 3
 
 ### Handling Missing Data
 ```java
-Rows row = new Rows(headers, Arrays.asList("1", "Alice", null));
+Row row = new Rows(headers, Arrays.asList("1", "Alice", null));
 
 String age = row.get("age");
 if (age == null) {
@@ -161,7 +161,7 @@ for (int i = 0; i < row.size(); i++) {
 ```java
 // Messy header: "  ID  ,Name, AGE "
 Headers headers = new Headers(Arrays.asList("  ID  ", "Name", " AGE "));
-Rows row = new Rows(headers, Arrays.asList("1", "Alice", null));
+Row row = new Rows(headers, Arrays.asList("1", "Alice", null));
 
 // All work (trimmed + case-insensitive):
 row.get("id");     // "1"
@@ -197,7 +197,7 @@ All operations are O(1) (constant time):
 
 ## Comparison: Headers vs Rows
 
-| | Headers | Rows |
+| | Headers | Row |
 |---|---|---|
 | **Holds** | Column names | Data values |
 | **Quantity** | One per CSV | Many per CSV |
@@ -209,9 +209,9 @@ All operations are O(1) (constant time):
 ## Related Classes
 
 - **Headers** (#11) - Column name mapping
-- **CsvReader** (#1) - Creates Rows from CSV
+- **CsvReader** (#1) - Creates Row from CSV
 - **RowBuilder** (#19) - Validates and builds Rows
-- **Schema** (#12) - Validates Rows data
+- **Schema** (#12) - Validates Row data
 
 ---
 

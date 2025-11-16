@@ -13,7 +13,7 @@ import java.util.*;
  * <p><b>Example usage:</b></p>
  * <pre>{@code
  * Headers headers = new Headers("id", "name", "age");
- * Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+ * Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
  * 
  * String name = row.get("name");  // "Alice"
  * String age = row.get(2);        // "25"
@@ -23,12 +23,12 @@ import java.util.*;
  * @see Headers
  * @see <a href="https://github.com/MichaelMcKibbin/ATU-SoftDev-Grp5Project/issues/10">Issue #10</a>
  */
-public class Rows {
+public class Row {
     private final Headers headers;
     private final List<String> values;
     
     /**
-     * Creates a Rows instance with the specified headers and values.
+     * Creates a Row instance with the specified headers and values.
      * <p>
      * The number of values must exactly match the number of columns in the headers.
      * Individual values may be null to represent missing data.
@@ -40,7 +40,7 @@ public class Rows {
      * @throws IllegalArgumentException if values is null
      * @throws IllegalArgumentException if value count does not match header count
      */
-    public Rows(Headers headers, List<String> values) {
+    public Row(Headers headers, List<String> values) {
         if (headers == null) {
             throw new IllegalArgumentException("Headers cannot be null");
         }

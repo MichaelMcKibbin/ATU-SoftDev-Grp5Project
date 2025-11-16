@@ -9,21 +9,21 @@ import java.util.*;
  * 
  * @author Edson Ferreira
  */
-class RowsTest {
+class RowTest {
     
     // Constructor Tests
     
     @Test
     void shouldCreateRowsWithHeadersAndValues() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         assertEquals(3, row.size());
     }
     
     @Test
     void shouldThrowExceptionForNullHeaders() {
         assertThrows(IllegalArgumentException.class, () -> {
-            new Rows(null, Arrays.asList("1", "Alice", "25"));
+            new Row(null, Arrays.asList("1", "Alice", "25"));
         });
     }
     
@@ -31,7 +31,7 @@ class RowsTest {
     void shouldThrowExceptionForNullValues() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
         assertThrows(IllegalArgumentException.class, () -> {
-            new Rows(headers, null);
+            new Row(headers, null);
         });
     }
     
@@ -39,14 +39,14 @@ class RowsTest {
     void shouldThrowExceptionForSizeMismatch() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
         assertThrows(IllegalArgumentException.class, () -> {
-            new Rows(headers, Arrays.asList("1", "Alice")); // Only 2 values
+            new Row(headers, Arrays.asList("1", "Alice")); // Only 2 values
         });
     }
     
     @Test
     void shouldAllowNullValuesForMissingData() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", null));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", null));
         assertNull(row.get("age"));
     }
     
@@ -55,7 +55,7 @@ class RowsTest {
     @Test
     void shouldGetValueByColumnName() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         assertEquals("1", row.get("id"));
         assertEquals("Alice", row.get("name"));
@@ -65,7 +65,7 @@ class RowsTest {
     @Test
     void shouldThrowExceptionForInvalidColumnName() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         assertThrows(IllegalArgumentException.class, () -> {
             row.get("email");
@@ -75,7 +75,7 @@ class RowsTest {
     @Test
     void shouldGetNullValueByColumnName() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", null, "25"));
+        Row row = new Row(headers, Arrays.asList("1", null, "25"));
         
         assertNull(row.get("name"));
     }
@@ -85,7 +85,7 @@ class RowsTest {
     @Test
     void shouldGetValueByIndex() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         assertEquals("1", row.get(0));
         assertEquals("Alice", row.get(1));
@@ -95,7 +95,7 @@ class RowsTest {
     @Test
     void shouldThrowExceptionForNegativeIndex() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         assertThrows(IndexOutOfBoundsException.class, () -> {
             row.get(-1);
@@ -105,7 +105,7 @@ class RowsTest {
     @Test
     void shouldThrowExceptionForIndexTooLarge() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         assertThrows(IndexOutOfBoundsException.class, () -> {
             row.get(10);
@@ -117,7 +117,7 @@ class RowsTest {
     @Test
     void shouldReturnCorrectSize() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         assertEquals(3, row.size());
     }
@@ -125,7 +125,7 @@ class RowsTest {
     @Test
     void shouldHandleSingleValue() {
         Headers headers = new Headers(Arrays.asList("id"));
-        Rows row = new Rows(headers, Arrays.asList("1"));
+        Row row = new Row(headers, Arrays.asList("1"));
         
         assertEquals(1, row.size());
     }
@@ -140,7 +140,7 @@ class RowsTest {
         }
         
         Headers headers = new Headers(columns);
-        Rows row = new Rows(headers, values);
+        Row row = new Row(headers, values);
         
         assertEquals(100, row.size());
         assertEquals("val50", row.get("col50"));
@@ -151,7 +151,7 @@ class RowsTest {
     @Test
     void shouldReturnFalseForNonEmptyRow() {
         Headers headers = new Headers(Arrays.asList("id", "name"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice"));
         
         assertFalse(row.isEmpty());
     }
@@ -161,7 +161,7 @@ class RowsTest {
     @Test
     void shouldReturnAllValues() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         List<String> values = row.getValues();
         assertEquals(3, values.size());
@@ -173,7 +173,7 @@ class RowsTest {
     @Test
     void shouldReturnUnmodifiableList() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         List<String> values = row.getValues();
         assertThrows(UnsupportedOperationException.class, () -> {
@@ -186,7 +186,7 @@ class RowsTest {
     @Test
     void shouldReturnHeaders() {
         Headers headers = new Headers(Arrays.asList("id", "name", "age"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", "25"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", "25"));
         
         assertEquals(headers, row.getHeaders());
     }
@@ -202,7 +202,7 @@ class RowsTest {
         
         String csvRow = "1,Alice,25,Dublin";
         List<String> values = Arrays.asList(csvRow.split(","));
-        Rows row = new Rows(headers, values);
+        Row row = new Row(headers, values);
         
         // Access data by column name
         assertEquals("Alice", row.get("name"));
@@ -219,7 +219,7 @@ class RowsTest {
         // Messy header with whitespace: "  ID  ,Name, AGE ,City"
         // Messy data with missing value: "1,Alice,,Dublin"
         Headers headers = new Headers(Arrays.asList("  ID  ", "Name", " AGE ", "City"));
-        Rows row = new Rows(headers, Arrays.asList("1", "Alice", null, "Dublin"));
+        Row row = new Row(headers, Arrays.asList("1", "Alice", null, "Dublin"));
         
         // Headers trims whitespace and is case-insensitive
         assertEquals("Alice", row.get("name"));      // lowercase works
