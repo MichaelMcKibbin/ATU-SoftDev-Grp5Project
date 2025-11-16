@@ -1,7 +1,7 @@
 # Headers Class - Design Documentation
 
 **Author**: Edson Ferreira  
-**Date**: November 11, 2025  
+**Date**: November 11, 2025 (Updated: November 15, 2025)  
 **Issue**: [#11 - Header](https://github.com/MichaelMcKibbin/ATU-SoftDev-Grp5Project/issues/11)  
 **Package**: `com.group5.csv.core`
 
@@ -10,6 +10,11 @@
 ## Purpose
 
 The `Headers` class manages the mapping between CSV column names and their positional indexes. It provides fast, bidirectional lookup between column names (e.g., "age") and their positions (e.g., column 2).
+
+**Key Features**:
+- **Whitespace trimming**: Automatically removes leading/trailing spaces from column names
+- **Case-insensitive lookup**: Find columns regardless of capitalization (e.g., "Name", "name", "NAME" all work)
+- **Original case preservation**: Keeps the original column name format for display and writing
 
 **Used by**: `Row`, `CsvReader`, `CsvWriter`, `Schema` for consistent column access, validation, and ordering.
 
@@ -203,6 +208,58 @@ Think of a CSV like a restaurant menu:
 | Memory usage | Low | Medium | Medium |
 
 **Conclusion**: Using both gives O(1) performance for all operations at the cost of slightly more memory.
+
+---
+
+## User-Friendly Features
+
+### Whitespace Trimming
+
+Headers automatically removes leading and trailing spaces from column names.
+
+**Why?** CSV files often have inconsistent spacing:
+```csv
+id,  name  , age,city
+```
+
+**Without trimming**: `"  name  "` and `"name"` are different columns (confusing!)
+
+**With trimming**: Both become `"name"` (works as expected!)
+
+**Example:**
+```java
+Headers headers = new Headers(Arrays.asList("  id  ", "name", "  age  "));
+headers.getIndex("id");    // Works! Returns 0
+headers.getName(0);        // Returns "id" (trimmed)
+```
+
+### Case-Insensitive Lookup
+
+You can find columns using any capitalization.
+
+**Why?** Users shouldn't have to remember exact capitalization:
+```csv
+ID,Name,AGE
+```
+
+**Without case-insensitive**: Must use exact case: `getIndex("ID")` ✅ but `getIndex("id")` ❌
+
+**With case-insensitive**: All work: `getIndex("ID")`, `getIndex("id")`, `getIndex("Id")` ✅
+
+**Example:**
+```java
+Headers headers = new Headers(Arrays.asList("ID", "Name", "AGE"));
+headers.getIndex("id");      // Works! Returns 0
+headers.getIndex("NAME");    // Works! Returns 1
+headers.getIndex("age");     // Works! Returns 2
+headers.getName(0);          // Returns "ID" (original case preserved)
+```
+
+**Trade-off:** Columns with same name but different case are treated as duplicates:
+```java
+// This throws exception (duplicate detected)
+new Headers(Arrays.asList("id", "ID", "name"));
+```
 
 ---
 
