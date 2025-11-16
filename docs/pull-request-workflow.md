@@ -1,7 +1,7 @@
 <!--
 # Pull Request Workflow
 # Prepared by @MichaelMcKibbin
-# 23 Oct 2025
+# 23 Oct 2025 / Updated 16 Nov 2025
 -->
 # Pull Request → Review → Merge Workflow
 
@@ -75,7 +75,7 @@ You’ll see build status below your PR title:
 
 Click **Details** to view build logs.
 
-## 4️⃣ Review Process (Reviewer’s Role)
+## 5️⃣ Review Process (Reviewer’s Role)
 Each reviewer should:
 
 1. Open the PR → **Files changed** tab.
@@ -208,6 +208,9 @@ Use Squash and Merge to keep main history clean.
 ### Before Opening a PR
 **Always update your branch with latest main:**
 
+It will help avoid overriding or deleting content submitted in other PRs/commits.
+
+
 ```bash
 git fetch origin
 git rebase origin/main  # or: git merge origin/main
@@ -232,13 +235,12 @@ git push --force-with-lease  # if rebased
 git push  # if merged
 ```
 
-### Team Coordination
-- ⏱️ Keep branches short-lived (1-2 days max)
-- 👀 Review PRs within 24 hours
-- 💬 Communicate what you're working on
+### Team Coordination tips
+- ⏱️ Keep branches short-lived
+- 👀 Review PRs fast as possible
+- 💬 Communicate what you're working on Whatsapp, Github for help
 - 🔄 Update your branch daily if work takes multiple days
 
-**Result:** Fewer conflicts, faster merges! 🎉
 
 <!--
 📸 (For future use...) Screenshot Placeholders
