@@ -3,6 +3,7 @@ package com.group5.csv.io;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * CsvPrinter is the low-level writer responsible for producing valid CSV text.
@@ -36,9 +37,10 @@ public final class CsvPrinter {
      * @param fmt the CsvFormat specifying delimiter, quoting, etc.
      */
     public CsvPrinter(Writer out, CsvFormat fmt) {
-        this.out = out;
-        this.fmt = fmt;
+        this.out = Objects.requireNonNull(out, "out must not be null");
+        this.fmt = Objects.requireNonNull(fmt, "fmt must not be null");
     }
+
 
     /**
      * Writes one row of CSV output.
