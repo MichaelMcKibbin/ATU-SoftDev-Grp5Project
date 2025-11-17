@@ -1,7 +1,7 @@
 <!--
 # Pull Request Workflow
 # Prepared by @MichaelMcKibbin
-# 23 Oct 2025
+# 23 Oct 2025 / Updated 16 Nov 2025
 -->
 # Pull Request → Review → Merge Workflow
 
@@ -9,9 +9,31 @@ This guide explains how to safely merge new code from a **feature branch** into 
 
 ---
 
-## 1️⃣ Push your feature branch
+## 1️⃣ Update Your Branch Before Opening PR ⚠️ IMPORTANT
 
-After committing your changes locally in IntelliJ or the terminal:
+**Before pushing**, ensure your branch has the latest changes from main:
+
+```bash
+# Fetch latest changes
+git fetch origin
+
+# Check if main has moved ahead  
+git log HEAD..origin/main --oneline
+
+# If there are new commits, update your branch
+git rebase origin/main
+# OR
+git merge origin/main
+
+# Resolve any conflicts if they appear
+# Run tests to ensure everything still works
+```
+
+**Why this matters:** If you skip this step, your PR may delete other people's merged work!
+
+## 2️⃣ Push your feature branch
+
+After updating and testing:
 
 ```git push -u origin feature/<your-branch-name>```
 
@@ -22,7 +44,7 @@ You’ll see a message in your browser:
 
 Click the green button to start a Pull Request (PR).
 
-## 2️⃣ Open a Pull Request (PR)
+## 3️⃣ Open a Pull Request (PR)
 The comparison maight look a little like this:
 
 ```base: main  ←  compare: feature/parser-fsm```
@@ -42,7 +64,7 @@ Assign at least one **Reviewer** (e.g. @michaelmckibbin or another teammate).
 
 Click **Create pull request**.
 
-## 3️⃣ Wait for CI Tests (Automated Build)
+## 4️⃣ Wait for CI Tests (Automated Build)
 GitHub Actions will automatically run Maven tests (mvn test).
 
 You’ll see build status below your PR title:
@@ -53,7 +75,7 @@ You’ll see build status below your PR title:
 
 Click **Details** to view build logs.
 
-## 4️⃣ Review Process (Reviewer’s Role)
+## 5️⃣ Review Process (Reviewer’s Role)
 Each reviewer should:
 
 1. Open the PR → **Files changed** tab.
@@ -178,6 +200,47 @@ Use clear commit messages (feat:, fix:, test:, docs:).
 Respond politely to reviewer feedback — reviews are about code quality, not criticism.
 
 Use Squash and Merge to keep main history clean.
+
+---
+
+## 🚨 Preventing Merge Conflicts
+
+### Before Opening a PR
+**Always update your branch with latest main:**
+
+It will help avoid overriding or deleting content submitted in other PRs/commits.
+
+
+```bash
+git fetch origin
+git rebase origin/main  # or: git merge origin/main
+git push -u origin feature/my-branch
+```
+
+### Before Merging a PR
+**Check if main has changed since you opened the PR:**
+
+On GitHub, look for:
+- ⚠️ "This branch is X commits behind main" → **Update first!**
+- ❌ "This branch has conflicts" → **Must resolve!**
+
+**If main has changed, update your branch:**
+
+```bash
+git checkout feature/my-branch
+git fetch origin
+git rebase origin/main  # or: git merge origin/main
+git push --force-with-lease  # if rebased
+# OR
+git push  # if merged
+```
+
+### Team Coordination tips
+- ⏱️ Keep branches short-lived
+- 👀 Review PRs fast as possible
+- 💬 Communicate what you're working on Whatsapp, Github for help
+- 🔄 Update your branch daily if work takes multiple days
+
 
 <!--
 📸 (For future use...) Screenshot Placeholders
