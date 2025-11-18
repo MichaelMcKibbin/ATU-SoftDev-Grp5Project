@@ -50,6 +50,38 @@ class HeadersTest {
         });
     }
     
+    @Test
+    void shouldThrowExceptionForEmptyStringColumnName() {
+        List<String> columns = Arrays.asList("id", "", "name");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    @Test
+    void shouldThrowExceptionForWhitespaceOnlyColumnName() {
+        List<String> columns = Arrays.asList("id", "   ", "name");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    @Test
+    void shouldThrowExceptionForTabOnlyColumnName() {
+        List<String> columns = Arrays.asList("id", "\t\t", "name");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    @Test
+    void shouldThrowExceptionForMixedWhitespaceOnlyColumnName() {
+        List<String> columns = Arrays.asList("id", " \t \n ", "name");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
     // Whitespace Trimming Tests
     
     @Test
