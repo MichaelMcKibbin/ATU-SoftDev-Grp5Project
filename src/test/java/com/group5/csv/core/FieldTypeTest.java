@@ -3,6 +3,7 @@ package com.group5.csv.core;
 import com.group5.csv.schema.DecimalSpec;
 import com.group5.csv.schema.DateSpec;
 import com.group5.csv.schema.DateTimeSpec;
+import com.group5.csv.validation.ValidationError;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Edson Ferreira
  */
 class FieldTypeTest {
-    
+
     /**
      * Mock Field implementation for testing FieldType.
      * Provides minimal implementation to support all FieldType operations.
@@ -32,40 +33,95 @@ class FieldTypeTest {
         private final DecimalSpec decimalSpec;
         private final DateTimeSpec dateTimeSpec;
         private final DateSpec dateSpec;
-        
+
         MockField(FieldType type) {
             this.type = type;
             this.decimalSpec = null;
             this.dateTimeSpec = null;
             this.dateSpec = null;
         }
-        
+
         MockField(FieldType type, DecimalSpec spec) {
             this.type = type;
             this.decimalSpec = spec;
             this.dateTimeSpec = null;
             this.dateSpec = null;
         }
-        
+
         MockField(FieldType type, DateTimeSpec spec) {
             this.type = type;
             this.decimalSpec = null;
             this.dateTimeSpec = spec;
             this.dateSpec = null;
         }
-        
+
         MockField(FieldType type, DateSpec spec) {
             this.type = type;
             this.decimalSpec = null;
             this.dateTimeSpec = null;
             this.dateSpec = spec;
         }
-        
-        @Override public FieldType type() { return type; }
-        @Override public DecimalSpec decimalSpec() { return decimalSpec; }
-        @Override public DateTimeSpec dateTimeSpec() { return dateTimeSpec; }
-        @Override public DateSpec dateSpec() { return dateSpec; }
+
+        // ---- Field interface implementation ----
+
+        @Override
+        public FieldType type() {
+            return type;
+        }
+
+        @Override
+        public DecimalSpec decimalSpec() {
+            return decimalSpec;
+        }
+
+        @Override
+        public DateTimeSpec dateTimeSpec() {
+            return dateTimeSpec;
+        }
+
+        @Override
+        public DateSpec dateSpec() {
+            return dateSpec;
+        }
+
+        // New methods added to Field – provide simple stubs for testing
+
+        @Override
+        public int index() {
+            return -1; // "unknown" index in tests
+        }
+
+        @Override
+        public String name() {
+            return "mock";
+        }
+
+        @Override
+        public String raw() {
+            return ""; // not used by these tests
+        }
+
+        @Override
+        public boolean isMissing() {
+            return false;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public java.util.List<ValidationError> errors() {
+            return java.util.List.of(); // empty, since we don't model errors here
+        }
+
+        @Override
+        public Object value() {
+            return null; // FieldTypeTest never calls this
+        }
     }
+
     
     // STRING Tests
     
