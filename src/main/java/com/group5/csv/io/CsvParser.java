@@ -167,14 +167,16 @@ public final class CsvParser {
                         // Just stay in AFTER_QUOTE
                     } else {
                         // non-whitespace garbage after closing quote
-                        if (!format.allowUnescapedQuotes) {
-                            throw new ParseException("Unexpected character '" + ch +
-                                    "' after closing quote");
-                        } else {
-                            // lenient mode: treat as normal char
-                            cell.append(ch);
-                            state = State.INSIDE_UNQUOTED;
-                        }
+                        throw new ParseException("Unexpected character '" + ch +
+                                "' after closing quote");
+//                        if (!format.allowUnescapedQuotes) {
+//                            throw new ParseException("Unexpected character '" + ch +
+//                                    "' after closing quote");
+//                        } else {
+//                            // lenient mode: treat as normal char
+//                            cell.append(ch);
+//                            state = State.INSIDE_UNQUOTED;
+//                        }
                     }
                 }
 

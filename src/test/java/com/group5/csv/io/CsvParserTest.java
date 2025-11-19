@@ -167,7 +167,28 @@ public class CsvParserTest {
                                 List.of("a","b%cc".formatted(d)),
                                 List.of("d %ce ".formatted(d))
                         )
-                )
+                ),
+
+                // two delimiters sequence
+                Arguments.of(
+                        "a%c%cbc\nd%ce".formatted(d, d, d),
+                        List.of(List.of("a","","bc"), List.of("d","e"))
+                ),
+
+                // three delimiters sequence
+                Arguments.of(
+                        "a%c%c%cbc\nd%ce".formatted(d, d, d, d),
+                        List.of(List.of("a","","","bc"), List.of("d","e"))
+                ),
+
+                // row consisting of pure delimeters
+                Arguments.of(
+                        "%c%c\na".formatted(d, d),
+                        List.of(List.of("","",""), List.of("a"))
+                ),
+
+                // Handles Double-quotes correctly
+                Arguments.of("\"a\"\"b\"", List.of(List.of("a\"b")))
         );
     }
 
@@ -307,6 +328,13 @@ public class CsvParserTest {
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
+    @Test
+    void rfc4180ThrowsOnSymbolsAfterQuotedCell() {
+        CsvParser parser = rfc4180Parser("\"a\"b,");
+        ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertTrue(ex.getMessage().toLowerCase().contains("quote"));
+    }
+
 
     // ------ EXCEL FORMAT ------
 
@@ -363,6 +391,13 @@ public class CsvParserTest {
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
+    @Test
+    void excelThrowsOnSymbolsAfterQuotedCell() {
+        CsvParser parser = excelParser("\"a\"b,");
+        ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertTrue(ex.getMessage().toLowerCase().contains("quote"));
+    }
+
 
     // ------ EXCEL WITH SEMICOLON FORMAT ------
 
@@ -415,6 +450,13 @@ public class CsvParserTest {
     @Test
     void excelSemicolonThrowsOnEOFInsideQuotedCell() {
         CsvParser parser = excelSemicolonParser("a;\"c");
+        ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertTrue(ex.getMessage().toLowerCase().contains("quote"));
+    }
+
+    @Test
+    void excelSemicolonThrowsOnSymbolsAfterQuotedCell() {
+        CsvParser parser = excelSemicolonParser("\"a\"b;");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
