@@ -64,7 +64,7 @@ public final class CsvFormat {
     /**
      * Excel-like behaviour when parsing fields.
      */
-    public final boolean skipWhitespaceBeforeQuotedField;
+    public final boolean skipWhitespaceAroundQuotes;
 
     /**
      * Default CSV (RFC 4180-ish, LF line endings).
@@ -82,28 +82,28 @@ public final class CsvFormat {
         return new CsvFormat(d, quoteChar, newline, alwaysQuote,
                 escapeChar, doubleQuoteEnabled, allowUnbalancedQuotes,
                 allowUnescapedQuotes, trimUnquotedFields,
-                skipWhitespaceBeforeQuotedField);
+                skipWhitespaceAroundQuotes);
     }
 
     public CsvFormat withQuoteChar(char q) {
         return new CsvFormat(delimiter, q, newline, alwaysQuote,
                 escapeChar, doubleQuoteEnabled, allowUnbalancedQuotes,
                 allowUnescapedQuotes, trimUnquotedFields,
-                skipWhitespaceBeforeQuotedField);
+                skipWhitespaceAroundQuotes);
     }
 
     public CsvFormat withNewline(String nl) {
         return new CsvFormat(delimiter, quoteChar, nl, alwaysQuote,
                 escapeChar, doubleQuoteEnabled, allowUnbalancedQuotes,
                 allowUnescapedQuotes, trimUnquotedFields,
-                skipWhitespaceBeforeQuotedField);
+                skipWhitespaceAroundQuotes);
     }
 
     public CsvFormat withAlwaysQuote(boolean v) {
         return new CsvFormat(delimiter, quoteChar, newline, v,
                 escapeChar, doubleQuoteEnabled, allowUnbalancedQuotes,
                 allowUnescapedQuotes, trimUnquotedFields,
-                skipWhitespaceBeforeQuotedField);
+                skipWhitespaceAroundQuotes);
     }
 
     private CsvFormat(char delimiter,
@@ -115,7 +115,7 @@ public final class CsvFormat {
                       boolean allowUnbalancedQuotes,
                       boolean allowUnescapedQuotes,
                       boolean trimUnquotedFields,
-                      boolean skipWhitespaceBeforeQuotedField) {
+                      boolean skipWhitespaceAroundQuotes) {
 
         if (newline == null || newline.isEmpty())
             throw new IllegalArgumentException("newline cannot be null/empty");
@@ -135,7 +135,7 @@ public final class CsvFormat {
         this.allowUnbalancedQuotes = allowUnbalancedQuotes;
         this.allowUnescapedQuotes = allowUnescapedQuotes;
         this.trimUnquotedFields = trimUnquotedFields;
-        this.skipWhitespaceBeforeQuotedField = skipWhitespaceBeforeQuotedField;
+        this.skipWhitespaceAroundQuotes = skipWhitespaceAroundQuotes;
     }
 
     public static Builder builder() {
@@ -153,7 +153,7 @@ public final class CsvFormat {
         private boolean allowUnescapedQuotes = false;
         private boolean allowUnbalancedQuotes = false;
         private boolean trimUnquotedFields = false;
-        private boolean skipWhitespaceBeforeQuotedField = false;
+        private boolean skipWhitespaceAroundQuotes = false;
 
         public Builder delimiter(char d) {
             this.delimiter = d;
@@ -200,8 +200,8 @@ public final class CsvFormat {
             return this;
         }
 
-        public Builder skipWhitespaceBeforeQuotedField(boolean v) {
-            this.skipWhitespaceBeforeQuotedField = v;
+        public Builder skipWhitespaceAroundQuotes(boolean v) {
+            this.skipWhitespaceAroundQuotes = v;
             return this;
         }
 
@@ -210,7 +210,7 @@ public final class CsvFormat {
                     delimiter, quoteChar, newline, alwaysQuote,
                     escapeChar, doubleQuoteEnabled,
                     allowUnbalancedQuotes, allowUnescapedQuotes,
-                    trimUnquotedFields, skipWhitespaceBeforeQuotedField
+                    trimUnquotedFields, skipWhitespaceAroundQuotes
             );
         }
     }
@@ -228,7 +228,8 @@ public final class CsvFormat {
     public static CsvFormat excel() {
         return builder()
                 .newline("\r\n")
-                .skipWhitespaceBeforeQuotedField(true)
+                .skipWhitespaceAroundQuotes(true)
+                .allowUnescapedQuotes(true)
                 .build();
     }
 
@@ -239,7 +240,8 @@ public final class CsvFormat {
         return builder()
                 .newline("\r\n")
                 .delimiter(';')
-                .skipWhitespaceBeforeQuotedField(true)
+                .skipWhitespaceAroundQuotes(true)
+                .allowUnescapedQuotes(true)
                 .build();
     }
 
@@ -251,6 +253,8 @@ public final class CsvFormat {
                 .escapeChar('\\')
                 .allowUnescapedQuotes(true)
                 .allowUnbalancedQuotes(true)
+                .trimUnquotedFields(true)
+                .skipWhitespaceAroundQuotes(true)
                 .build();
     }
 
@@ -262,6 +266,9 @@ public final class CsvFormat {
                 .delimiter('\t')
                 .quoteChar(NO_QUOTE)
                 .escapeChar(NO_ESCAPE)
+                .doubleQuoteEnabled(false)
+                .allowUnescapedQuotes(true)
+                .allowUnbalancedQuotes(true)
                 .build();
     }
 
@@ -277,7 +284,7 @@ public final class CsvFormat {
                 ", allowUnescapedQuotes=" + allowUnescapedQuotes +
                 ", allowUnbalancedQuotes=" + allowUnbalancedQuotes +
                 ", trimUnquotedFields=" + trimUnquotedFields +
-                ", skipWhitespaceBeforeQuotedField=" + skipWhitespaceBeforeQuotedField +
+                ", skipWhitespaceAroundQuotes=" + skipWhitespaceAroundQuotes +
                 '}';
     }
 
