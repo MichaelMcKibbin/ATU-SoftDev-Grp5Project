@@ -5,7 +5,6 @@ import com.group5.csv.testutils.VirtualReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvParsingException;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -114,19 +113,19 @@ public class CsvParserTest {
                 Arguments.of("\r", List.of(List.of(""))),
 
                 // EOF after delimiter
-                Arguments.of("a,b,", List.of(List.of("a", "b", ""))),
+                Arguments.of("a%cb%c".formatted(d, d), List.of(List.of("a", "b", ""))),
 
                 // EOF after LF
-                Arguments.of("a,b\n", List.of(List.of("a", "b"))),
+                Arguments.of("a%cb\n".formatted(d), List.of(List.of("a", "b"))),
 
                 // EOF after CR
-                Arguments.of("a,b\r", List.of(List.of("a", "b"))),
+                Arguments.of("a%cb\r".formatted(d), List.of(List.of("a", "b"))),
 
                 // EOF after CRLF
-                Arguments.of("a,b\r\n", List.of(List.of("a", "b"))),
+                Arguments.of("a%cb\r\n".formatted(d), List.of(List.of("a", "b"))),
 
                 // EOF after Quoted Cell
-                Arguments.of("a,b\n\"c\"", List.of(List.of("a", "b"), List.of("c"))));
+                Arguments.of("a%cb\n\"c\"".formatted(d), List.of(List.of("a", "b"), List.of("c"))));
     }
 
     private static Stream<Arguments> semicolonEOFValidCases() {
@@ -154,7 +153,7 @@ public class CsvParserTest {
 
                 // Preserves whitespaces inside quoted cells
                 Arguments.of(
-                        "\"a \",\"b\",\" c\"%n\"d  \",\" e \"".formatted(d),
+                        "\"a \"%c\"b\"%c\" c\"%n\"d  \"%c\" e \"".formatted(d, d, d),
                         List.of(
                                 List.of("a ","b"," c"),
                                 List.of("d  "," e ")
@@ -163,10 +162,10 @@ public class CsvParserTest {
 
                 // Preserves delimiters inside quoted cell
                 Arguments.of(
-                        "a,\"b%cc\"\n\"d ,e \"".formatted(d),
+                        "a%c\"b%cc\"\n\"d %ce \"".formatted(d, d, d),
                         List.of(
-                                List.of("a","b%c"),   // Adjust %c in quoted if needed
-                                List.of("d ,e ")
+                                List.of("a","b%cc".formatted(d)),
+                                List.of("d %ce ".formatted(d))
                         )
                 )
         );
@@ -210,6 +209,9 @@ public class CsvParserTest {
     // applicable if CvsFormat.skipWhitespaceAroundQuotes is true (e.g: Excel)
     private static Stream<Arguments> skipWhitespaceAroundQuotedCellCases(char d) {
         return Stream.of(
+                // No spaces case
+                Arguments.of("\"abc\"%cd".formatted(d), List.of(List.of("abc", "d"))),
+
                 // Space Before Quoted Cell
                 Arguments.of(" \"abc\"%cd".formatted(d), List.of(List.of("abc", "d"))),
 
@@ -287,21 +289,21 @@ public class CsvParserTest {
     @Test
     void rfc4180ThrowsOnUnescapedQuoteInTheEnd() {
         CsvParser parser = rfc4180Parser("ab\"");
-        CsvParsingException ex = assertThrows(CsvParsingException.class, parser::readRow);
+        ParseException ex = assertThrows(ParseException.class, parser::readRow);
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
     @Test
     void rfc4180ThrowsOnUnescapedQuoteInTheMiddle() {
         CsvParser parser = rfc4180Parser("ab\"c");
-        CsvParsingException ex = assertThrows(CsvParsingException.class, parser::readRow);
+        ParseException ex = assertThrows(ParseException.class, parser::readRow);
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
     @Test
     void rfc4180ThrowsOnEOFInsideQuotedCell() {
         CsvParser parser = rfc4180Parser("a,\"c");
-        CsvParsingException ex = assertThrows(CsvParsingException.class, parser::readRow);
+        ParseException ex = assertThrows(ParseException.class, parser::readRow);
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -336,7 +338,7 @@ public class CsvParserTest {
     @ParameterizedTest
     @MethodSource("skipWhitespaceAroundQuotesComma")
     void excelSkipWhitespacesAroundQuotedCell(String input, List<List<String>> expected) {
-        CsvParser parser = excelParser("ab\"");
+        CsvParser parser = excelParser(input);
         assertEquals(expected, parseAllRows(parser));
     }
 
@@ -357,7 +359,7 @@ public class CsvParserTest {
     @Test
     void excelThrowsOnEOFInsideQuotedCell() {
         CsvParser parser = excelParser("a,\"c");
-        CsvParsingException ex = assertThrows(CsvParsingException.class, parser::readRow);
+        ParseException ex = assertThrows(ParseException.class, parser::readRow);
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -392,7 +394,7 @@ public class CsvParserTest {
     @ParameterizedTest
     @MethodSource("skipWhitespaceAroundQuotesSemicolon")
     void excelSemicolonSkipWhitespacesAroundQuotedCell(String input, List<List<String>> expected) {
-        CsvParser parser = excelSemicolonParser("ab\"");
+        CsvParser parser = excelSemicolonParser(input);
         assertEquals(expected, parseAllRows(parser));
     }
 
@@ -412,8 +414,8 @@ public class CsvParserTest {
 
     @Test
     void excelSemicolonThrowsOnEOFInsideQuotedCell() {
-        CsvParser parser = excelSemicolonParser("a,\"c");
-        CsvParsingException ex = assertThrows(CsvParsingException.class, parser::readRow);
+        CsvParser parser = excelSemicolonParser("a;\"c");
+        ParseException ex = assertThrows(ParseException.class, parser::readRow);
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
