@@ -1,12 +1,12 @@
-Design Rationale – Core Model (Row, Field, FieldType, RowBuilder)
+# Design Rationale – Core Model (Row, Field, FieldType, RowBuilder)
 
 This section explains the main design decisions in the com.group5.csv.core package: why rows are immutable, why a separate builder is used, and why the type system is modelled with an enum-based FieldType.
 
-1. Immutable Row: Safety, Simplicity, and Reasoning
+## 1. Immutable Row: Safety, Simplicity, and Reasoning
 
-Row is designed as an immutable value object:
+**Row** is designed as an immutable value object:
 
-A row is constructed once (via RowBuilder) and then exposed read-only.
+A row is constructed once (via **RowBuilder**) and then exposed read-only.
 
 Callers can safely share Row instances without worrying about accidental modification.
 
@@ -18,13 +18,14 @@ avoid subtle bugs caused by shared mutable state,
 
 use rows safely in caches, collections, or parallel processing.
 
-From an API perspective, a Row represents “the data as read from the CSV” at a specific point in time. Once parsed and validated, it should not change under the caller’s feet. This strongly aligns with value-object and DDD-style design principles.
+From an API perspective, a Row represents “the data as read from the CSV” at a specific point in time. Once parsed and validated, it should not change under the caller’s feet.
 
-2. RowBuilder: A Controlled Construction Process
 
-Instead of allowing Row to be constructed directly in a piecemeal way, a dedicated RowBuilder is used as a mutable helper.
+## 2. RowBuilder: A Controlled Construction Process
 
-Motivations:
+Instead of allowing **Row** to be constructed directly in a piecemeal way, a dedicated **RowBuilder** is used as a mutable helper.
+
+_Motivations:_
 
 Parsing a CSV record is naturally incremental:
 
@@ -42,15 +43,16 @@ preventing partially constructed or malformed rows from leaking into the rest of
 
 This separation yields a clean workflow:
 
-Headers defines the expected columns.
+**Headers** defines the expected columns.
 
-RowBuilder accumulates raw string values as the parser reads a row.
+**RowBuilder** accumulates raw string values as the parser reads a row.
 
-RowBuilder.build() performs a final consistency check and returns a fully-formed, immutable Row.
+**RowBuilder.build()** performs a final consistency check and returns a fully-formed, immutable Row.
 
 This design keeps Row simple and robust, while allowing the parser layer (CsvReader) to remain efficient and flexible.
 
-3. Field and FieldType: Clear Type Semantics
+
+## 3. Field and FieldType: Clear Type Semantics
 
 Each cell within a row is modelled as a Field, which combines:
 
@@ -62,7 +64,8 @@ validation state (missing, errors),
 
 and a logical type represented by FieldType.
 
-3.1 Why an enum FieldType?
+
+### Why an enum FieldType?
 
 Using an enum for FieldType (e.g. STRING, INT, DECIMAL, DATE, DATETIME) has several advantages:
 
@@ -85,7 +88,7 @@ Complex types like decimal and datetime depend on configuration objects:
 
 DecimalSpec for precision/scale and formatting,
 
-DateSpec / DateTimeSpec for patterns and allowed formats.
+DateSpec / DateTimeSpec / TimeSpec for patterns and allowed formats.
 FieldType uses the specs exposed by Field (decimalSpec(), dateSpec(), etc.) to perform type-aware parsing and formatting.
 
 This design gives strong separation between:
@@ -94,17 +97,15 @@ What a type is (FieldType enum), and
 
 How that type is configured (DecimalSpec, DateSpec, DateTimeSpec).
 
-4. Field as a Rich Cell Model
+## 4. Field as a Rich Cell Model
 
 Field acts as the “single cell façade” over raw data, type, and validation:
 
 Provides access to:
 
-raw() – original text,
-
-value() / valueAs(Class<T>) – the parsed value,
-
-isMissing(), isValid(), and errors() – validation state.
+- raw() – original text,
+- value() / valueAs(Class<T>) – the parsed value,
+- isMissing(), isValid(), and errors() – validation state.
 
 Delegates type-specific behaviour to FieldType and specs.
 
@@ -120,18 +121,25 @@ Validation information is localised at cell level, which makes error reporting a
 
 This sets up a good foundation for schema-based validation and richer error reporting in later iterations.
 
-5. Separation of Concerns and Testability
+
+## 5. Separation of Concerns and Testability
 
 Overall, the design separates concerns cleanly:
 
 I/O layer (csv.io)
+
 Deals with streams, encoding, and CSV dialect details.
 
 Core layer (csv.core)
+
 Models rows, fields, headers, and types — independent of I/O.
 
 Schema/validation layer (csv.schema)
+
 Encapsulates rules such as formats and constraints.
+
+
+Tests are split into three parts:
 
 Because these responsibilities are isolated, each part is straightforward to unit test:
 
