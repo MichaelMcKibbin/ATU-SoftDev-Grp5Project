@@ -86,28 +86,30 @@ public final class CsvParser {
 
             switch (state) {
                 case START_ROW -> {
-                    // first character of a new row
-                    if (ch == '\n') {
-                        // empty line -> return single empty cell
-                        row.add("");
-                        return row;
-                    } else if (ch == format.quoteChar) {
-                        state = State.INSIDE_QUOTED;
-                        if (format.skipWhitespaceAroundQuotes) {
-                            cell.setLength(0); // skip tabs and spaces in excel-like syntax
-                        }
-                    } else if (ch == format.delimiter) {
-                        row.add("");
-                        state = State.START_CELL;
-                    } else if ((ch == ' ' || ch == '\t') && format.skipWhitespaceAroundQuotes) {
-                        cell.append(ch);
-                        // collect tabs and spaces in excel-like syntax
-                        // in order to skip them if field is quoted (when quote symbol encountered)
-                        // or retain otherwise
-                    } else {
-                        cell.append(ch);
-                        state = State.INSIDE_UNQUOTED;
-                    }
+                    in.unread(ch);
+                    state = State.START_CELL;
+//                    // first character of a new row
+//                    if (ch == '\n') {
+//                        // empty line -> return single empty cell
+//                        row.add("");
+//                        return row;
+//                    } else if (ch == format.quoteChar) {
+//                        state = State.INSIDE_QUOTED;
+//                        if (format.skipWhitespaceAroundQuotes) {
+//                            cell.setLength(0); // skip tabs and spaces in excel-like syntax
+//                        }
+//                    } else if (ch == format.delimiter) {
+//                        row.add("");
+//                        state = State.START_CELL;
+//                    } else if ((ch == ' ' || ch == '\t') && format.skipWhitespaceAroundQuotes) {
+//                        cell.append(ch);
+//                        // collect tabs and spaces in excel-like syntax
+//                        // in order to skip them if field is quoted (when quote symbol encountered)
+//                        // or retain otherwise
+//                    } else {
+//                        cell.append(ch);
+//                        state = State.INSIDE_UNQUOTED;
+//                    }
                 }
 
                 case START_CELL -> {
@@ -144,7 +146,6 @@ public final class CsvParser {
                             if (next != -1) {
                                 in.unread(next);
                             }
-//                            in.unread(next);
                             state = State.AFTER_QUOTE;
                         }
                     } else {
