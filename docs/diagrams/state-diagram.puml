@@ -1,0 +1,44 @@
+@startuml
+skinparam state {
+  BackgroundColor #8dabf2
+  BorderColor #08142e
+  FontSize 12
+  FontColor #08142e
+}
+
+[*] --> OUTSIDE_FIELD
+
+state OUTSIDE_FIELD {
+}
+
+state IN_UNQUOTED_FIELD {
+}
+
+state IN_QUOTED_FIELD {
+}
+
+state AFTER_QUOTE {
+}
+
+'OUTSIDE_FIELD transitions
+OUTSIDE_FIELD --> IN_QUOTED_FIELD : quoteChar
+OUTSIDE_FIELD --> IN_UNQUOTED_FIELD : other char\n(non-delimiter, non-quote, non-newline)
+OUTSIDE_FIELD --> OUTSIDE_FIELD : delimiter\n=> empty field
+OUTSIDE_FIELD --> [*] : newline or EOF\n=> end record (final empty field)
+
+'IN_UNQUOTED_FIELD transitions
+IN_UNQUOTED_FIELD --> OUTSIDE_FIELD : delimiter\n=> emit field, expect next
+IN_UNQUOTED_FIELD --> [*] : newline or EOF\n=> emit field, end record
+IN_UNQUOTED_FIELD --> IN_UNQUOTED_FIELD : other char
+
+'IN_QUOTED_FIELD transitions
+IN_QUOTED_FIELD --> AFTER_QUOTE : quoteChar\n(possible end of quoted field)
+IN_QUOTED_FIELD --> IN_QUOTED_FIELD : any char except quote\n(including delimiter/newline)
+
+'AFTER_QUOTE transitions
+AFTER_QUOTE --> OUTSIDE_FIELD : delimiter\n=> emit field, expect next
+AFTER_QUOTE --> [*] : newline or EOF\n=> emit field, end record
+AFTER_QUOTE --> IN_QUOTED_FIELD : quoteChar\n=> escaped quote ("")
+AFTER_QUOTE --> [*] : any other char\n=> ERROR (invalid CSV)
+
+@enduml

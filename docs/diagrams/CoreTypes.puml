@@ -3,9 +3,7 @@
 
 ## 3️⃣ PlantUML Class Diagram (Core Types)
 
-You can paste this straight into a `.puml` or `.plantuml` file and generate the diagram (or use it as an appendix in your report).
 
-```plantuml
 @startuml
 skinparam classAttributeIconSize 0
 
