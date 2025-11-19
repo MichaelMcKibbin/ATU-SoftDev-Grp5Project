@@ -19,7 +19,8 @@ public class Headers {
      * Lookup is case-insensitive for better user experience.
      * 
      * @param columnNames ordered list of column names from CSV header
-     * @throws IllegalArgumentException if columnNames is null, empty, contains null, or has duplicates
+     * @throws IllegalArgumentException if columnNames is null, empty, contains null, 
+     *                                  contains empty/whitespace-only strings, or has duplicates
      */
     public Headers(List<String> columnNames) {
         if (columnNames == null || columnNames.isEmpty()) {
@@ -36,6 +37,11 @@ public class Headers {
             }
             
             String trimmed = name.trim();
+            
+            if (trimmed.isEmpty()) {
+                throw new IllegalArgumentException("Column name cannot be empty or whitespace-only");
+            }
+            
             String normalized = trimmed.toLowerCase();
             
             if (nameToIndex.containsKey(normalized)) {
