@@ -1,0 +1,95 @@
+
+---
+
+## 3️⃣ PlantUML Class Diagram (Core Types)
+
+You can paste this straight into a `.puml` or `.plantuml` file and generate the diagram (or use it as an appendix in your report).
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+
+package "com.group5.csv.core" {
+
+    class Headers {
+        - names : List<String>
+        --
+        + Headers(List<String> names)
+        + int size()
+        + String get(int index)
+        + int getIndex(String name)
+        + boolean contains(String name)
+        + List<String> asList()
+    }
+
+    class Row {
+        - headers : Headers
+        - values  : List<Field>
+        --
+        + Row(Headers headers, List<String> rawValues)
+        + Headers headers()
+        + int size()
+        + String get(int index)
+        + String get(String columnName)
+        + Field field(int index)
+        + Field field(String columnName)
+    }
+
+    class RowBuilder {
+        - headers : Headers
+        - values  : List<String>
+        --
+        + RowBuilder(Headers headers)
+        + static RowBuilder forHeaders(Headers headers)
+        + Headers getHeaders()
+        + RowBuilder add(String value)
+        + RowBuilder addAll(List<String> values)
+        + RowBuilder set(int index, String value)
+        + RowBuilder set(String columnName, String value)
+        + int size()
+        + boolean isComplete()
+        + List<String> getValues()
+        + void clear()
+        + Row build()
+    }
+
+    interface Field {
+        + int index()
+        + String name()
+        + String raw()
+        + FieldType type()
+        + boolean isMissing()
+        + boolean isValid()
+        + List<ValidationError> errors()
+        + Object value()
+        + <T> T valueAs(Class<T> clazz)
+        + DecimalSpec decimalSpec()
+        + DateSpec dateSpec()
+        + DateTimeSpec dateTimeSpec()
+    }
+
+    enum FieldType {
+        STRING
+        INT
+        LONG
+        DOUBLE
+        DECIMAL
+        BOOLEAN
+        DATE
+        DATETIME
+        --
+        + Object parse(String raw, Field field)
+        + String format(Object value, Field field)
+    }
+}
+
+RowBuilder --> Headers : uses
+RowBuilder --> Row : builds
+Row "1" o-- "*" Field : contains
+Row --> Headers : uses
+Field --> FieldType : has-a
+Field --> DecimalSpec
+Field --> DateSpec
+Field --> DateTimeSpec
+
+@enduml
