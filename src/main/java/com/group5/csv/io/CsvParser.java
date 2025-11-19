@@ -39,6 +39,8 @@ public final class CsvParser {
         this.in = new PushbackReader(reader, 2);
     }
 
+    public CsvFormat getFormat() { return format; }
+
     /**
      * Reads the next logical row from the input.
      *
