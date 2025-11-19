@@ -65,7 +65,7 @@ public final class CsvParser {
                         // EOF before any data
                         return row.isEmpty() ? null : row;
                     }
-                    case INSIDE_QUOTED, AFTER_QUOTE ->
+                    case INSIDE_QUOTED/*, AFTER_QUOTE*/ ->
                             throw new ParseException("Unexpected end of file inside quoted field");
                     default -> {
                         // push last cell if there is one
@@ -93,9 +93,17 @@ public final class CsvParser {
                         return row;
                     } else if (ch == format.quoteChar) {
                         state = State.INSIDE_QUOTED;
+                        if (format.skipWhitespaceAroundQuotes) {
+                            cell.setLength(0); // skip tabs and spaces in excel-like syntax
+                        }
                     } else if (ch == format.delimiter) {
                         row.add("");
                         state = State.START_CELL;
+                    } else if ((ch == ' ' || ch == '\t') && format.skipWhitespaceAroundQuotes) {
+                        cell.append(ch);
+                        // collect tabs and spaces in excel-like syntax
+                        // in order to skip them if field is quoted (when quote symbol encountered)
+                        // or retain otherwise
                     } else {
                         cell.append(ch);
                         state = State.INSIDE_UNQUOTED;
@@ -108,9 +116,17 @@ public final class CsvParser {
                         return row;
                     } else if (ch == format.quoteChar) {
                         state = State.INSIDE_QUOTED;
+                        if (format.skipWhitespaceAroundQuotes) {
+                            cell.setLength(0); // skip tabs and spaces in excel-like syntax
+                        }
                     } else if (ch == format.delimiter) {
                         row.add("");
                         // stay in START_CELL for next empty cell
+                    } else if ((ch == ' ' || ch == '\t') && format.skipWhitespaceAroundQuotes) {
+                        cell.append(ch);
+                        // collect tabs and spaces in excel-like syntax
+                        // in order to skip them if field is quoted (when quote symbol encountered)
+                        // or retain otherwise
                     } else {
                         cell.append(ch);
                         state = State.INSIDE_UNQUOTED;
@@ -128,6 +144,7 @@ public final class CsvParser {
                             if (next != -1) {
                                 in.unread(next);
                             }
+//                            in.unread(next);
                             state = State.AFTER_QUOTE;
                         }
                     } else {
@@ -143,8 +160,8 @@ public final class CsvParser {
                     } else if (ch == '\n') {
                         row.add(cell.toString());
                         return row;
-                    } else if (Character.isWhitespace(ch) && format.skipWhitespaceBeforeQuotedField) {
-                        // Excel-style: ignore trailing spaces after closing quote
+                    } else if (format.skipWhitespaceAroundQuotes && (ch == '\t' || ch == ' ')) {
+                        // Excel-style: ignore trailing spaces and tabs after closing quote
                         // and before delimiter or newline
                         // Just stay in AFTER_QUOTE
                     } else {
