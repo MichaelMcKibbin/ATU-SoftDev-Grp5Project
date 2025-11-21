@@ -1,5 +1,7 @@
 package com.group5.csv.io;
 
+import java.util.Objects;
+
 /**
  * CsvFormat is a small, immutable configuration holder that defines
  * *how* CSV files are written or read (the "dialect" of the CSV).
@@ -275,10 +277,10 @@ public final class CsvFormat {
     @Override
     public String toString() {
         return "CsvFormat{" +
-                "delimiter=" + printableChar(delimiter) +
-                ", quoteChar=" + printableChar(quoteChar) +
-                ", escapeChar=" + printableChar(escapeChar) +
-                ", newline=" + printableLineSeparator(newline) +
+                "delimiter='" + printableChar(delimiter) + "'" +
+                ", quoteChar='" + printableChar(quoteChar) + "'" +
+                ", escapeChar='" + printableChar(escapeChar) + "'" +
+                ", newline=\"" + printableString(newline) + "\"" +
                 ", alwaysQuote=" + alwaysQuote +
                 ", doubleQuoteEnabled=" + doubleQuoteEnabled +
                 ", allowUnescapedQuotes=" + allowUnescapedQuotes +
@@ -288,18 +290,46 @@ public final class CsvFormat {
                 '}';
     }
 
+
     private static String printableChar(char c) {
         return switch (c) {
-            case '\t' -> "'\\t'";
-            case '\n' -> "'\\n'";
-            case '\r' -> "'\\r'";
-            case '\0' -> "'\\0'";
-            default -> "'" + c + "'";
+            case '\t' -> "\\t";
+            case '\n' -> "\\n";
+            case '\r' -> "\\r";
+            case '\0' -> "\\0";
+            default -> "%c".formatted(c);
         };
     }
 
-    private static String printableLineSeparator(String sep) {
-        return sep.replace("\r", "\\r").replace("\n", "\\n");
+    private static String printableString(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); ++i)
+            sb.append(printableChar(s.charAt(i)));
+        return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CsvFormat)) return false;
+        CsvFormat that = (CsvFormat) o;
+        return delimiter == that.delimiter
+                && quoteChar == that.quoteChar
+                && escapeChar == that.escapeChar
+                && newline.equals(that.newline)
+                && alwaysQuote == that.alwaysQuote
+                && doubleQuoteEnabled == that.doubleQuoteEnabled
+                && allowUnescapedQuotes == that.allowUnescapedQuotes
+                && allowUnbalancedQuotes == that.allowUnbalancedQuotes
+                && trimUnquotedFields == that.trimUnquotedFields
+                && skipWhitespaceAroundQuotes == that.skipWhitespaceAroundQuotes;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(delimiter, quoteChar, escapeChar, newline, alwaysQuote,
+                doubleQuoteEnabled, allowUnescapedQuotes, allowUnbalancedQuotes,
+                trimUnquotedFields, skipWhitespaceAroundQuotes);
     }
 
 }

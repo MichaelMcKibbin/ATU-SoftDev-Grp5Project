@@ -81,4 +81,39 @@ class CsvConfigTest {
                 new CsvConfig.Builder().setReadBufSize(0).build()
         );
     }
+
+    @Test
+    void builderSetsFormatCorrectly() {
+        CsvConfig config = new CsvConfig.Builder().setFormat(CsvFormat.rfc4180()).build();
+        assertEquals(config.getFormat(), CsvFormat.rfc4180());
+    }
+
+    @Test
+    void builderThrowsOnNullFormat() {
+        assertThrows(
+                NullPointerException.class, () ->
+                new CsvConfig.Builder().setFormat(null).build()
+        );
+    }
+
+    @Test
+    void testToStringContainsFields() {
+        CsvConfig cfg = new CsvConfig.Builder()
+                .setReadBufSize(4096)
+                .setCharset(StandardCharsets.UTF_8)
+                .setHasHeader(false)
+                .setSkipEmptyLines(true)
+                .setRequireUniformFieldCount(true)
+                .setWriteBOM(true).build();
+
+        String s = cfg.toString();
+
+        assertTrue(s.contains("CsvConfig"));
+        assertTrue(s.contains("readBufSize=4096"));
+        assertTrue(s.contains("hasHeader=false"));
+        assertTrue(s.contains("requireUniformFieldCount=true"));
+        assertTrue(s.contains("skipEmptyLines=true"));
+        assertTrue(s.contains("writeBOM=true"));
+        assertTrue(s.contains("charset=UTF-8"));
+    }
 }
