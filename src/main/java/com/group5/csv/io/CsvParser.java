@@ -82,6 +82,7 @@ public final class CsvParser {
         StringBuilder cell = new StringBuilder();
 
         State state = State.START_ROW;
+        position = 0;
         int chInt;
 
         while (true) {

@@ -1,6 +1,12 @@
 package com.group5.csv.exceptions;
 
+import com.group5.csv.io.CsvFormat;
+import com.group5.csv.io.CsvParser;
+import com.group5.csv.testutils.VirtualReader;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -63,5 +69,17 @@ class ParseExceptionTest {
         ParseException ex = new ParseException("Parsing failed", -1, -1);
         ex.setColumn(1_000_000_007);
         assertEquals(1_000_000_007, ex.getColumn());
+    }
+
+    @Test
+    void correctlyTracksPositionInMultilineFile() {
+        CsvParser parser = new CsvParser(CsvFormat.rfc4180(), new VirtualReader("aaaaaaaaaa\nb,\"c"));
+        ParseException ex = assertThrows(ParseException.class, () -> {
+            List<List<String>> result = new ArrayList<>();
+            for (List<String> row; (row = parser.readRow()) != null; )
+                result.add(row);
+        });
+        assertEquals(5, ex.getColumn());
+        assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 }
