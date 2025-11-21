@@ -215,15 +215,15 @@ public class CsvParserTest {
     // applicable if CvsFormat.skipWhitespaceAroundQuotes is false (e.g: RFC-4180)
     private static Stream<Arguments> invalidWhitespaceAroundQuotedCellCases() {
         return Stream.of(
-                Arguments.of(" \"abc\",d"),      // Space Before Quoted Cell
-                Arguments.of("   \"abc\",d"),    // Spaces Before Quoted Cell
-                Arguments.of("\t\"abc\",d"),     // Tab Before Quoted Cell
-                Arguments.of("\t \t\"abc\",d"),  // Mixed Whitespaces Before Quoted Cell
+                Arguments.of(" \"abc\",d", 2),      // Space Before Quoted Cell
+                Arguments.of("   \"abc\",d", 4),    // Spaces Before Quoted Cell
+                Arguments.of("\t\"abc\",d", 2),     // Tab Before Quoted Cell
+                Arguments.of("\t \t\"abc\",d", 4),  // Mixed Whitespaces Before Quoted Cell
 
-                Arguments.of("\"abc\" ,d"),      // Space After Quoted Cell
-                Arguments.of("\"abc\"   ,d"),    // Spaces After Quoted Cell
-                Arguments.of("\"abc\"\t,d"),     // Tab After Quoted Cell
-                Arguments.of("\"abc\"\t \t,d")   // Mixed Whitespaces After Quoted Cell
+                Arguments.of("\"abc\" ,d", 6),      // Space After Quoted Cell
+                Arguments.of("\"abc\"   ,d", 6),    // Spaces After Quoted Cell
+                Arguments.of("\"abc\"\t,d", 6),     // Tab After Quoted Cell
+                Arguments.of("\"abc\"\t \t,d", 6)   // Mixed Whitespaces After Quoted Cell
         );
     }
 
@@ -290,9 +290,10 @@ public class CsvParserTest {
 
     @ParameterizedTest
     @MethodSource("invalidWhitespaceAroundQuotedCellCases")
-    void rfc4180RejectsInvalidWhitespaces(String input) {
+    void rfc4180RejectsInvalidWhitespaces(String input, int exCol) {
         CsvParser parser = rfc4180Parser(input);
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(exCol, ex.getColumn());
         assertTrue(
                 ex.getMessage().toLowerCase().contains("unexpected") ||
                         ex.getMessage().toLowerCase().contains("quote"),
@@ -311,6 +312,7 @@ public class CsvParserTest {
     void rfc4180ThrowsOnUnescapedQuoteInTheEnd() {
         CsvParser parser = rfc4180Parser("ab\"");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(3, ex.getColumn());
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -318,6 +320,7 @@ public class CsvParserTest {
     void rfc4180ThrowsOnUnescapedQuoteInTheMiddle() {
         CsvParser parser = rfc4180Parser("ab\"c");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(3, ex.getColumn());
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -325,6 +328,7 @@ public class CsvParserTest {
     void rfc4180ThrowsOnEOFInsideQuotedCell() {
         CsvParser parser = rfc4180Parser("a,\"c");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(5, ex.getColumn());
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -332,6 +336,7 @@ public class CsvParserTest {
     void rfc4180ThrowsOnSymbolsAfterQuotedCell() {
         CsvParser parser = rfc4180Parser("\"a\"b,");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(4, ex.getColumn());
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -388,6 +393,7 @@ public class CsvParserTest {
     void excelThrowsOnEOFInsideQuotedCell() {
         CsvParser parser = excelParser("a,\"c");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(5, ex.getColumn());
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -395,6 +401,7 @@ public class CsvParserTest {
     void excelThrowsOnSymbolsAfterQuotedCell() {
         CsvParser parser = excelParser("\"a\"b,");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(4, ex.getColumn());
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -451,6 +458,7 @@ public class CsvParserTest {
     void excelSemicolonThrowsOnEOFInsideQuotedCell() {
         CsvParser parser = excelSemicolonParser("a;\"c");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(5, ex.getColumn());
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
@@ -458,6 +466,7 @@ public class CsvParserTest {
     void excelSemicolonThrowsOnSymbolsAfterQuotedCell() {
         CsvParser parser = excelSemicolonParser("\"a\"b;");
         ParseException ex = assertThrows(ParseException.class, parser::readRow);
+        assertEquals(4, ex.getColumn());
         assertTrue(ex.getMessage().toLowerCase().contains("quote"));
     }
 
