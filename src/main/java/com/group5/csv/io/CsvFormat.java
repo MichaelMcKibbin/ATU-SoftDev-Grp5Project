@@ -298,7 +298,7 @@ public final class CsvFormat {
         };
     }
 
-    private static String printableLineSeparator(String sep) {
+    public static String printableLineSeparator(String sep) {
         return sep.replace("\r", "\\r").replace("\n", "\\n");
     }
 
