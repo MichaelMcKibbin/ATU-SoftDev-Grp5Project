@@ -22,6 +22,7 @@ public final class CsvParser {
 
     private final CsvFormat format;
     private final PushbackReader in;
+    private int position = 0;
 
     // Internal FSM states
     private enum State {
@@ -42,6 +43,34 @@ public final class CsvParser {
     public CsvFormat getFormat() { return format; }
 
     /**
+     * Reads the next char from the input, increments position
+     * @return next char form in stream
+     * @throws IOException
+     */
+    private int read() throws IOException {
+        ++position;
+        return in.read();
+    }
+
+    /**
+     * Uneads the given char back to the input, decrements position
+     * @throws IOException
+     */
+    private void unread(int ch) throws IOException {
+        in.unread(ch);
+        --position;
+    }
+
+    /**
+     * Throws ParseException with position details.
+     *
+     * @throws ParseException
+     */
+    private void throwParseException(String msg) {
+        throw new ParseException(msg, -1, position);
+    }
+
+    /**
      * Reads the next logical row from the input.
      *
      * @return list of cell values, or null if EOF is reached before any data
@@ -53,10 +82,11 @@ public final class CsvParser {
         StringBuilder cell = new StringBuilder();
 
         State state = State.START_ROW;
+        position = 0;
         int chInt;
 
         while (true) {
-            chInt = in.read();
+            chInt = read();
             char ch = (char) chInt;
 
             if (chInt == -1) { // EOF
@@ -66,7 +96,7 @@ public final class CsvParser {
                         return row.isEmpty() ? null : row;
                     }
                     case INSIDE_QUOTED/*, AFTER_QUOTE*/ ->
-                            throw new ParseException("Unexpected end of file inside quoted field");
+                            throwParseException("Unexpected end of file inside quoted field");
                     default -> {
                         // push last cell if there is one
                         row.add(cell.toString());
@@ -77,16 +107,16 @@ public final class CsvParser {
 
             // normalise CRLF => treat \r\n as single newline
             if (ch == '\r') {
-                int next = in.read();
+                int next = read();
                 if (next != '\n' && next != -1) {
-                    in.unread(next);
+                    unread(next);
                 }
                 ch = '\n';
             }
 
             switch (state) {
                 case START_ROW -> {
-                    in.unread(ch);
+                    unread(ch);
                     state = State.START_CELL;
 //                    // first character of a new row
 //                    if (ch == '\n') {
@@ -138,13 +168,13 @@ public final class CsvParser {
                 case INSIDE_QUOTED -> {
                     if (ch == format.quoteChar) {
                         // Possible end of quoted field or escaped quote
-                        int next = in.read();
+                        int next = read();
                         if (next == format.quoteChar && format.doubleQuoteEnabled) {
                             // Escaped quote ("")
                             cell.append(format.quoteChar);
                         } else {
                             if (next != -1) {
-                                in.unread(next);
+                                unread(next);
                             }
                             state = State.AFTER_QUOTE;
                         }
@@ -167,10 +197,10 @@ public final class CsvParser {
                         // Just stay in AFTER_QUOTE
                     } else {
                         // non-whitespace garbage after closing quote
-                        throw new ParseException("Unexpected character '" + ch +
+                        throwParseException("Unexpected character '" + ch +
                                 "' after closing quote");
 //                        if (!format.allowUnescapedQuotes) {
-//                            throw new ParseException("Unexpected character '" + ch +
+//                            throwParseException("Unexpected character '" + ch +
 //                                    "' after closing quote");
 //                        } else {
 //                            // lenient mode: treat as normal char
@@ -193,7 +223,7 @@ public final class CsvParser {
                         row.add(value);
                         return row;
                     } else if (ch == format.quoteChar && !format.allowUnescapedQuotes) {
-                        throw new ParseException("Unexpected quote in unquoted field");
+                        throwParseException("Unexpected quote in unquoted field");
                     } else {
                         cell.append(ch);
                     }
