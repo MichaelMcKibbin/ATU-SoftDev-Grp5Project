@@ -1,103 +1,150 @@
 package com.group5.csv.io;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+////This class can be called from main using code like the following
+/**
+        CsvReader csvReader = new CsvReader();
+        CsvConfig config = csvReader.createConfig();
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Please enter full CSV path and file name with its file extension:");
+        String fileName = scanner.nextLine();
+        fileName = fileName.replace("\\", "\\\\");
+        csvReader.fileToConsoleTable(fileName);
+ */
 
 public class CsvReader {
+
+private List<String> singleRow = new ArrayList<>();
+private List<String> multiRow = new ArrayList<>();
+
 
     //https://www.rfc-editor.org/rfc/rfc4180
     //https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#lineending
     //Variables
-    public String fullFileAddress;
+    //constructor
 
-    public String filePath;
-    public String fileName;
-    public String fileExtension;
+    public CsvReader() {
+    }
 
-    public ArrayList<String> rows = new ArrayList<String>();
-    String y;
+    public CsvConfig createConfig() {
+        CsvConfig config = new CsvConfig.Builder()
+                .setFormat(CsvFormat.excel())
+                .setHasHeader(true)
+                .setRequireUniformFieldCount(false)
+                .setSkipEmptyLines(true)
+                .setCharset(StandardCharsets.UTF_8)
+                .setWriteBOM(true)
+                .setReadBufSize(8192)
+                .build();
 
-    //Constructor with 4 parameters
-    //Call with CsvReader fourParas = new CsvReader(filePath, fileName,  fileExtension, rows);
-    public CsvReader(String filePath, String fileName, String fileExtension, ArrayList<String> rows) {
+        return config;
 
-        this.filePath = filePath;
-        this.fileName = fileName;
-        this.fileExtension = fileExtension;
-        this.rows = rows;
-        String fullFileAddress = filePath + "\\" + fileName + "." + fileExtension;
+
+    }
+
+    private void setSingleRow(CsvParser csvParser) {
         try {
-            makeAndRead(fullFileAddress, rows);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            singleRow = csvParser.readRow();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    //Constructor with 2 parameters
-    // Call with CsvReader twoParas = new CsvReader(fullFileAddress, rows);
-    // It is necessary to add double backslashes ("C:\\A\\B\\C\\D\\E.csv") except when using scanner user input where only single backslashes are needed.
-    public CsvReader(String fullFileAddress, ArrayList rows) {
-        this.fullFileAddress = fullFileAddress;
-        this.rows = rows;
-
+    public void fileToConsoleTable(String fileName) {
+        Reader reader = null;
         try {
-            makeAndRead(fullFileAddress, rows);
+            reader = new FileReader(fileName);
+            //Butch Cassidy
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-    }
-
-    //Read file text to array list
-    public void makeAndRead(String y, ArrayList d) throws FileNotFoundException {
-        this.y = y;
-        File x = new File(y);
-
-        try (Scanner z = new Scanner(x)) {
-            while (z.hasNextLine()) {
-                String data = z.nextLine();
-                Pattern anyLineBreak = Pattern.compile("(?s)\\\\r\\\\n|\\\\r|\\\\n");
-                String regex1 = "(?s)(\\\\r\\\\n|\\\\r|\\\\n)(?=(?:[^\\\\\\\"]*\\\\\\\"[^\\\\\\\"]*\\\\\\\")*[^\\\\\\\"]*$)";
-                Pattern ALBNotInDoubleQuotes = Pattern.compile(regex1);
-                Matcher m = ALBNotInDoubleQuotes.matcher(data);
-                ArrayList<Integer> matchStarts =  new ArrayList<>();
-                ArrayList<Integer> matchEnds =  new ArrayList<>();
-                if (m.find()) {
-                    matchStarts.add(m.start());
-                    matchEnds.add(m.end());
-                    while (m.find()) {
-                        matchStarts.add(m.start());
-                        matchEnds.add(m.end());
-                    }
-                    //for testing only
-//                    d.add(data);
-                    d.add(data.substring(0,matchStarts.get(0)));
-                    if (matchStarts.size() > 1) {
-
-                        for (int i = 0; i < matchStarts.size() - 1; i++) {
-                            d.add(data.substring(matchEnds.get(i), matchStarts.get(i + 1)));
-                        }
-//                    after last match
-                        d.add(data.substring(matchEnds.get(matchStarts.size() - 1), data.length()));
-
-                    } else {
-                        d.add(data.substring(matchEnds.get(0)));
-
-                    }
-
-//                        d.add(data.substring(matchEnds.get(matchEnds.size() - 1)));
-                } else {
-                    //else if no match
-                    d.add(data);
-                }
-
+        CsvConfig config = createConfig();
+        int i = 0;
+        int j = 0;
+        CsvParser parser = new CsvParser(config.getFormat(),reader);
+        setSingleRow(parser);
+        System.out.print(singleRow);
+        while (singleRow != null) {
+            for(j=0;j<singleRow.size();j++){
+                multiRow.add(singleRow.get(j));
             }
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
+            setSingleRow(parser);
+        }
+        printTable(multiRow);
+        }
+
+    public static void printTable(List<String> cells) {
+        List<List<String>> rows = new ArrayList<>();
+        List<String> current = new ArrayList<>();
+
+        for (String cell : cells) {
+            if (cell.isEmpty()) {
+                if (!current.isEmpty()) {
+                    rows.add(current);
+                    current = new ArrayList<>();
+                }
+            } else {
+                current.add(cell);
+            }
+        }
+        if (!current.isEmpty()) {
+            rows.add(current);
+        }
+
+        // now print each row with the earlier method
+        for (List<String> row : rows) {
+            printTableRow(row);  // your previous method
         }
     }
+
+    public static void printTableRow(List<String> cells) {
+        int width = 15; // cell width
+
+        // top border
+        System.out.print("+");
+        for (int i = 0; i < cells.size(); i++) {
+            for (int j = 0; j < width; j++) {
+                System.out.print("-");
+            }
+            System.out.print("+");
+        }
+        System.out.println();
+
+        // row
+        System.out.print("|");
+        for (String cell : cells) {
+            String content = cell;
+            if (content.length() > width) {
+                content = content.substring(0, width);
+            }
+            System.out.print(content);
+            // pad with spaces
+            for (int j = content.length(); j < width; j++) {
+                System.out.print(" ");
+            }
+            System.out.print("|");
+        }
+        System.out.println();
+
+        // bottom border
+        System.out.print("+");
+        for (int i = 0; i < cells.size(); i++) {
+            for (int j = 0; j < width; j++) {
+                System.out.print("-");
+            }
+            System.out.print("+");
+        }
+        System.out.println();
+    }
+    
 }
+
