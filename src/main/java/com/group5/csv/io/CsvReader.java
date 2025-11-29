@@ -1,10 +1,13 @@
 package com.group5.csv.io;
 
+import com.group5.csv.core.Headers;
+import com.group5.csv.core.Row;
+import com.group5.csv.core.RowBuilder;
+import com.group5.csv.exceptions.ParseException;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.nio.file.Files;
@@ -21,21 +24,57 @@ import java.nio.file.Paths;
         csvReader.fileToConsoleTable(fileName);
  */
 
-public class CsvReader {
+public class CsvReader implements Closeable, Iterable<Row> {
 
-private List<String> singleRow = new ArrayList<>();
-private List<String> multiRow = new ArrayList<>();
+    private final CsvConfig config;
+    private final CsvParser parser;
+    private final Reader in;
+    private Headers headers;
+    private final List<String> warnings;
+    private List<String> singleRow = new ArrayList<>();
+    private List<String> multiRow = new ArrayList<>();
 
+    public CsvConfig getConfig() { return config; }
+    public CsvParser getParser() { return parser; }
+    public Reader getIn() { return in; }
+    public Headers getHeaders() { return headers; }
+    public List<String> getWarnings() { return Collections.unmodifiableList(warnings); }
 
     //https://www.rfc-editor.org/rfc/rfc4180
     //https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#lineending
     //Variables
     //constructor
 
-    public CsvReader() {
+    public CsvReader(InputStream input) {
+        this(input, createConfig());
     }
 
-    public CsvConfig createConfig() {
+    public CsvReader(Reader input) {
+        this(input, createConfig());
+    }
+
+    public CsvReader(InputStream input, CsvConfig config) {
+        this(input, config, null);
+    }
+
+    public CsvReader(Reader reader, CsvConfig config) {
+        this(reader, config, null);
+    }
+
+    public CsvReader(InputStream input, CsvConfig config, Headers headers) {
+        this(new InputStreamReader(input, config.getCharset()), config, headers);
+    }
+
+    public CsvReader(Reader reader, CsvConfig config, Headers headers) {
+        this.in = reader instanceof BufferedReader ? reader :
+                new BufferedReader(reader, config.getReadBufSize());
+        this.config = config;
+        this.headers = headers;
+        this.parser = new CsvParser(config.getFormat(), in);
+        this.warnings = new ArrayList<>();
+    }
+
+    private static CsvConfig createConfig() {
         CsvConfig config = new CsvConfig.Builder()
                 .setFormat(CsvFormat.excel())
                 .setHasHeader(true)
@@ -47,8 +86,24 @@ private List<String> multiRow = new ArrayList<>();
                 .build();
 
         return config;
+    }
 
+    public List<Row> readAll() throws IOException {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
 
+    public Row readRow() throws IOException {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public Iterator<Row> iterator() {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
+    public void close() throws IOException {
+        in.close();
     }
 
     private void setSingleRow(CsvParser csvParser) {
