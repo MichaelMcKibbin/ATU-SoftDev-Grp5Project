@@ -27,12 +27,12 @@ class HeadersTest {
         });
     }
     
-    @Test
-    void shouldThrowExceptionForEmptyList() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Headers(new ArrayList<>());
-        });
-    }
+//    @Test
+//    void shouldThrowExceptionForEmptyList() {
+//        assertThrows(IllegalArgumentException.class, () -> {
+//            new Headers(new ArrayList<>());
+//        });
+//    }
     
     @Test
     void shouldThrowExceptionForNullColumnName() {

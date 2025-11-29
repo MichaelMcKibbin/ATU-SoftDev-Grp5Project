@@ -23,7 +23,8 @@ public class Headers {
      *                                  contains empty/whitespace-only strings, or has duplicates
      */
     public Headers(List<String> columnNames) {
-        if (columnNames == null || columnNames.isEmpty()) {
+        // enables possibility of empty lines (with empty headers)
+        if (columnNames == null /*|| columnNames.isEmpty()*/) {
             throw new IllegalArgumentException("Column names cannot be null or empty");
         }
         
