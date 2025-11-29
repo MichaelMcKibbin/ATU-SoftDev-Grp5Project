@@ -92,7 +92,7 @@ public class CsvParserTest {
                 // MIXED
                 Arguments.of("a\rb\r\nc\nd\n\re", List.of(
                         List.of("a"), List.of("b"), List.of("c"),
-                        List.of("d"), List.of(""), List.of("e"))
+                        List.of("d"), List.of(), List.of("e"))
                 )
         );
     }
@@ -104,13 +104,13 @@ public class CsvParserTest {
                 Arguments.of("", List.of()),
 
                 // EOF after LF with no content
-                Arguments.of("\n", List.of(List.of(""))),
+                Arguments.of("\n", List.of(List.of())),
 
                 // EOF after CRLF with no content
-                Arguments.of("\r\n", List.of(List.of(""))),
+                Arguments.of("\r\n", List.of(List.of())),
 
                 // EOF after CR with no content
-                Arguments.of("\r", List.of(List.of(""))),
+                Arguments.of("\r", List.of(List.of())),
 
                 // EOF after delimiter
                 Arguments.of("a%cb%c".formatted(d, d), List.of(List.of("a", "b", ""))),
