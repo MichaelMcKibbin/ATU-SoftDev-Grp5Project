@@ -52,6 +52,34 @@ public class Headers {
             nameToIndex.put(normalized, i);
         }
     }
+
+    /**
+     * Creates a {@code Headers} instance with a fixed number of generated column names.
+     * <p>
+     * The column names follow the pattern {@code col0}, {@code col1}, ..., {@code colN},
+     * where {@code N = size - 1}. This constructor is intended for CSV data that does not
+     * include a header row, allowing the caller to work with a predictable set of synthetic
+     * header names.
+     * </p>
+     *
+     * @param size the number of columns to generate; must be non-negative
+     * @throws IllegalArgumentException if {@code size} is negative
+     */
+    public Headers(int size) {
+        this(createAutoColumns(size));
+    }
+
+    private static List<String> createAutoColumns(int size) {
+        if (size < 0) {
+            throw new IllegalArgumentException("Columns number cannot be negative");
+        }
+
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            names.add("col" + i);
+        }
+        return names;
+    }
     
     /**
      * Gets the positional index of a column by its name.
