@@ -75,11 +75,7 @@ public class Main {
         try {
             System.out.print("Enter CSV file path: ");
             String path = sc.nextLine();
-            File file = new File(path);
-
-            var result = InputStreamDetector.detect(file, StandardCharsets.UTF_8);
-            CsvReader reader = new CsvReader(result.stream, new CsvConfig.Builder().setCharset(result.charset).build());
-
+            CsvReader reader = CsvReader.fromPath(Path.of(path));
             List<Row> rows = reader.readAll();
             System.out.printf("Read %d rows.%n", rows.size());
             rows.stream().limit(5).forEach(System.out::println); // show first 5 rows
@@ -124,10 +120,7 @@ public class Main {
 
         try (
                 // Reader side: use CsvReader with the configured charset and format
-                CsvReader reader = new CsvReader(
-                        Files.newBufferedReader(inPath, config.getCharset()),
-                        config
-                )
+                CsvReader reader = CsvReader.fromPath(inPath, config);
         ) {
             List<Row> rows = reader.readAll();
             System.out.printf("Read %d row(s) from %s%n", rows.size(), inPath);

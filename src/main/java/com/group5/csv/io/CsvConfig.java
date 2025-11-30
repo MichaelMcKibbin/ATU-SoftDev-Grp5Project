@@ -33,6 +33,11 @@ public final class CsvConfig {
     private final boolean writeBOM;
     private final int readBufSize;
 
+    /**
+     * Returns a new {@link CsvFormat.Builder} for constructing {@code CsvFormat} instance.
+     *
+     * @return a fresh builder
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -255,6 +260,32 @@ public final class CsvConfig {
                 throw new IllegalArgumentException("readBufSize must be > 0");
             return new CsvConfig(this);
         }
+    }
+
+    /**
+     * Creates a new {@link Builder} pre-populated with the values of this {@code CsvConfig}.
+     * <p>
+     * This allows creating a modified copy of the current configuration while preserving
+     * immutability, for example:
+     *
+     * <pre>{@code
+     * CsvConfig modified = original
+     *         .toBuilder()
+     *         .setCharset(StandardCharsets.ISO_8859_1)
+     *         .build();
+     * }</pre>
+     *
+     * @return a builder initialised with this configuration's values
+     */
+    public Builder toBuilder() {
+        return new Builder()
+                .setFormat(this.format)
+                .setHasHeader(this.hasHeader)
+                .setRequireUniformFieldCount(this.requireUniformFieldCount)
+                .setSkipEmptyLines(this.skipEmptyLines)
+                .setCharset(this.charset)
+                .setWriteBOM(this.writeBOM)
+                .setReadBufSize(this.readBufSize);
     }
 
     @Override

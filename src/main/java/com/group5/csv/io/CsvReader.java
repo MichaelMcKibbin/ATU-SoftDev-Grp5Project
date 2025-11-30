@@ -4,9 +4,11 @@ import com.group5.csv.core.Headers;
 import com.group5.csv.core.Row;
 import com.group5.csv.core.RowBuilder;
 import com.group5.csv.exceptions.ParseException;
+import static com.group5.csv.io.InputStreamDetector.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 
 //https://www.rfc-editor.org/rfc/rfc4180
@@ -90,7 +92,6 @@ public class CsvReader implements Closeable, Iterable<Row> {
     public CsvWarning getLastRowWarning() {
         return lastRowWarning;
     }
-
 
 
     // ----- constructors -----
@@ -188,6 +189,50 @@ public class CsvReader implements Closeable, Iterable<Row> {
 
         return config;
     }
+
+    /**
+     * Creates a {@link CsvReader} from the given {@link Path} and configuration.
+     * <p>
+     * Charset detection is only performed when the configured charset belongs
+     * to the UTF-8 family. If a different charset is configured, it is used as-is.
+     * When detection occurs and a different charset is found, a new {@link CsvConfig}
+     * is created via {@link CsvConfig#toBuilder()} with the detected charset while
+     * preserving all other settings.
+     *
+     * @param path   the CSV file path; must not be {@code null}
+     * @param config the CSV configuration; must not be {@code null}
+     * @return a new {@link CsvReader} instance
+     * @throws IllegalArgumentException if {@code path} or {@code config} is {@code null}
+     * @throws IOException if an error occurs while opening the file
+     */
+    public static CsvReader fromPath(Path path, CsvConfig config) throws IOException
+    {
+        if (path == null) throw new IllegalArgumentException("path must not be null");
+        if (config == null) throw new IllegalArgumentException("config must not be null");
+
+        InputStreamDetector.Result detected = InputStreamDetector
+                .detect(path.toFile(), config.getCharset());
+        InputStream in = detected.stream;
+        CsvConfig newConfig = detected.charset.equals(config.getCharset()) ?
+                config : config.toBuilder().setCharset(detected.charset).build();
+        return new CsvReader(in, newConfig);
+    }
+
+    /**
+     * Creates a {@link CsvReader} for the given {@link Path} using the default configuration.
+     *
+     * @param path the CSV file path; must not be {@code null}
+     * @return a new {@link CsvReader} instance
+     * @throws IllegalArgumentException if {@code path} is {@code null}
+     * @throws IOException if an error occurs while opening the file
+     */
+    public static CsvReader fromPath(Path path) throws IOException
+    {
+        return fromPath(path, createConfig());
+    }
+
+
+    // ----- behaviour methods -----
 
     /**
      * Reads all rows from the CSV input until end-of-file.
