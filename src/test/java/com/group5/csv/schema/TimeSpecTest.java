@@ -1,6 +1,5 @@
 package com.group5.csv.schema;
 
-import com.group5.csv.exceptions.ParseException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalTime;
@@ -10,43 +9,59 @@ import static org.junit.jupiter.api.Assertions.*;
 class TimeSpecTest {
 
     @Test
-    void parses24HourTime() {
+    void parsesIsoLocalTime() {
         TimeSpec spec = new TimeSpec();
-        LocalTime t = spec.parse("23:59");
-        assertEquals(23, t.getHour());
-        assertEquals(59, t.getMinute());
+        LocalTime t = spec.parse("14:30:45");
+        assertEquals(LocalTime.of(14, 30, 45), t);
     }
 
     @Test
-    void parses12HourTimeWithAmPm() {
+    void parsesHhMmFormat() {
         TimeSpec spec = new TimeSpec();
-        LocalTime t = spec.parse("11:45 PM");
-        assertEquals(23, t.getHour());
-        assertEquals(45, t.getMinute());
+        LocalTime t = spec.parse("14:30");
+        assertEquals(LocalTime.of(14, 30), t);
     }
 
     @Test
-    void rejectsInvalidTime() {
+    void parses12HourFormatWithAm() {
         TimeSpec spec = new TimeSpec();
-        assertThrows(ParseException.class, () -> spec.parse("25:99"));
+        LocalTime t = spec.parse("09:15 AM");
+        assertEquals(LocalTime.of(9, 15), t);
+    }
+
+    @Test
+    void parses12HourFormatWithPm() {
+        TimeSpec spec = new TimeSpec();
+        LocalTime t = spec.parse("02:45 PM");
+        assertEquals(LocalTime.of(14, 45), t);
     }
 
     @Test
     void formatsTimeToString() {
         TimeSpec spec = new TimeSpec();
-        LocalTime input = LocalTime.of(14, 30);
+        LocalTime input = LocalTime.of(14, 30, 45);
         String out = spec.format(input);
         assertNotNull(out);
         assertFalse(out.isBlank());
     }
 
     @Test
-    void returnsNullForBlankWhenAllowed() {
-        DateTimeSpec base = new DateTimeSpec.Builder()
-                .acceptPresets("ISO_LOCAL_TIME")
-                .allowBlank(true)
-                .build();
-        TimeSpec spec = new TimeSpec(base);
-        assertNull(spec.parse(""));
+    void isValidReturnsTrueForValidTime() {
+        TimeSpec spec = new TimeSpec();
+        assertTrue(spec.isValid("14:30:45"));
+        assertTrue(spec.isValid("09:15 AM"));
+    }
+
+    @Test
+    void isValidReturnsFalseForInvalidTime() {
+        TimeSpec spec = new TimeSpec();
+        assertFalse(spec.isValid("25:00:00"));
+        assertFalse(spec.isValid("invalid"));
+    }
+
+    @Test
+    void formatNullReturnsNull() {
+        TimeSpec spec = new TimeSpec();
+        assertNull(spec.format(null));
     }
 }
