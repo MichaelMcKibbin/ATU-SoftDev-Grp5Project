@@ -2,16 +2,27 @@ package com.group5.csv.io;
 
 import com.group5.csv.core.Field;
 import com.group5.csv.core.FieldType;
+import com.group5.csv.exceptions.ParseException;
+
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+
+
+
+
 
 /**
  * Basic test of MVP/MWP version of CsvWriter
@@ -27,6 +38,111 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 
 class CsvWriterTest {
+
+// --- helper to parse all rows from a string using CsvParser ---
+private List<List<String>> parseAll(String csv, CsvFormat format) throws IOException {
+    CsvParser parser = new CsvParser(format, new StringReader(csv));
+    List<List<String>> rows = new ArrayList<>();
+
+    List<String> row;
+    while ((row = parser.readRow()) != null) {
+        rows.add(row);
+    }
+    return rows;
+}
+
+// --- helper to round-trip rows through CsvWriter ---
+private String writeAll(List<List<String>> rows, CsvConfig config) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    try (CsvWriter writer = new CsvWriter(out, config)) {
+        writer.writeAll(rows);
+    }
+    Charset cs = config.getCharset();
+    return out.toString(cs);
+}
+
+@Test
+void roundTrip_rfc4180_basic() throws IOException, ParseException {
+    String input =
+            "id,name,age\n" +
+                    "1,Alice,30\n" +
+                    "2,Bob,40\n";
+
+    CsvConfig config = CsvConfig.builder()
+            .setFormat(CsvFormat.rfc4180())
+            .setHasHeader(false)     // parser-only here, header semantics not used
+            .build();
+
+    List<List<String>> originalRows = parseAll(input, config.getFormat());
+    String written = writeAll(originalRows, config);
+    List<List<String>> reParsedRows = parseAll(written, config.getFormat());
+
+    assertEquals(originalRows, reParsedRows,
+            "Round-trip via CsvWriter should preserve all cells for RFC-4180 dialect");
+}
+
+    @Test
+    void roundTrip_semicolon_delimiter() throws IOException {
+        String input =
+                "id;name;amount\n" +
+                        "1;Alice;100.50\n" +
+                        "2;Bob;200.75\n";
+
+        CsvConfig config = CsvConfig.builder()
+                .setFormat(CsvFormat.excel_semicolon())  // keep your actual preset name
+                .setHasHeader(false)
+                .build();
+
+        List<List<String>> originalRows = parseAll(input, config.getFormat());
+        String written = writeAll(originalRows, config);
+        List<List<String>> reParsedRows = parseAll(written, config.getFormat());
+
+        assertEquals(originalRows, reParsedRows,
+                "Round-trip via CsvWriter should preserve cells for semicolon-delimited dialect");
+    }
+
+
+@Test
+void roundTrip_tab_delimiter() throws IOException {
+    String input =
+            "id\tname\tcomment\n" +
+                    "1\tAlice\tHello\tworld\n" +   // note: internal tab => will be quoted
+                    "2\tBob\tSecond line\n";
+
+    CsvConfig config = CsvConfig.builder()
+            .setFormat(CsvFormat.tsv())  // adjust if you named it differently
+            .setHasHeader(false)
+            .build();
+
+    List<List<String>> originalRows = parseAll(input, config.getFormat());
+    String written = writeAll(originalRows, config);
+    List<List<String>> reParsedRows = parseAll(written, config.getFormat());
+
+    assertEquals(originalRows, reParsedRows,
+            "Round-trip via CsvWriter should preserve cells for tab-delimited dialect");
+}
+
+@Test
+void roundTrip_windowsNewlines() throws IOException {
+    String input =
+            "id,name\r\n" +
+                    "1,Alice\r\n" +
+                    "2,Bob\r\n";
+
+    CsvConfig config = CsvConfig.builder()
+            .setFormat(CsvFormat.rfc4180()) // assuming this normalises CRLF internally
+            .setHasHeader(false)
+            .build();
+
+    List<List<String>> originalRows = parseAll(input, config.getFormat());
+    String written = writeAll(originalRows, config);
+    List<List<String>> reParsedRows = parseAll(written, config.getFormat());
+
+    // We don’t assert on raw newline chars (CsvPrinter may normalise),
+    // only on the parsed cell values.
+    assertEquals(originalRows, reParsedRows,
+            "Round-trip should preserve cells even when input uses CRLF newlines");
+}
 
 
 ///**
