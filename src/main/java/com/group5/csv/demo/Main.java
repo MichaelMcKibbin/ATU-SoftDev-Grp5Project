@@ -20,6 +20,7 @@ public class Main {
             System.out.println("1) Read CSV file");
             System.out.println("2) Write sample CSV");
             System.out.println("3) Validate CSV (Schema placeholder)");
+            System.out.println("4) Round-trip CSV (read & write using CsvReader/CsvWriter)");
             System.out.println("0) Exit");
             System.out.print("Choose option: ");
 
@@ -28,6 +29,7 @@ public class Main {
                 case "1" -> demoRead(sc);
                 case "2" -> demoWrite();
                 case "3" -> System.out.println("Schema validation not yet implemented.");
+                case "4" -> demoRoundTrip(sc);
                 case "0" -> {
                     System.out.println("Goodbye!");
                     return;
@@ -86,20 +88,69 @@ public class Main {
         }
     }
 
-//    private static void demoWrite() {
-//        try {
-//            File file = new File("demo_output.csv");
-//            CsvConfig config = new CsvConfig();
-//            CsvWriter writer = new CsvWriter(file, config);
-//
-//            writer.writeRow(new String[]{"id", "name", "age"});
-//            writer.writeRow(new String[]{"1", "Alice", "25"});
-//            writer.writeRow(new String[]{"2", "Bob", "30"});
-//            writer.close();
-//
-//            System.out.println("Created demo_output.csv successfully.");
-//        } catch (Exception e) {
-//            System.err.println("Error writing CSV: " + e.getMessage());
-//        }
-//    }
+    /**
+     * Demonstrates a simple CSV round-trip:
+     *  - read rows with CsvReader
+     *  - display a preview in the console
+     *  - write all rows back out with CsvWriter
+     */
+    private static void demoRoundTrip(Scanner sc) {
+        System.out.print("Enter input CSV file path: ");
+        String inPathStr = sc.nextLine().trim();
+        if (inPathStr.isEmpty()) {
+            System.out.println("No path entered, aborting.");
+            return;
+        }
+
+        Path inPath = Paths.get(inPathStr);
+        if (!Files.exists(inPath)) {
+            System.out.println("Input file not found: " + inPath);
+            return;
+        }
+
+        System.out.print("Enter output CSV file path (leave blank for demo_output.csv): ");
+        String outPathStr = sc.nextLine().trim();
+        if (outPathStr.isEmpty()) {
+            outPathStr = "demo_output.csv";
+        }
+        Path outPath = Paths.get(outPathStr);
+
+        // For demo purposes we use RFC-4180 with a header row.
+        CsvConfig config = CsvConfig.builder()
+                .setFormat(CsvFormat.rfc4180())
+                .setHasHeader(true)
+                .setRequireUniformFieldCount(true)
+                .build();
+
+        try (
+                // Reader side: use CsvReader with the configured charset and format
+                CsvReader reader = new CsvReader(
+                        Files.newBufferedReader(inPath, config.getCharset()),
+                        config
+                )
+        ) {
+            List<Row> rows = reader.readAll();
+            System.out.printf("Read %d row(s) from %s%n", rows.size(), inPath);
+
+            // Show a small preview in the console
+            System.out.println("--- Preview (up to 5 rows) ---");
+            rows.stream()
+                    .limit(5)
+                    .forEach(System.out::println);
+            System.out.println("------------------------------");
+
+            // Writer side: round-trip the same rows to the output file
+            try (CsvWriter writer = CsvWriter.toPath(outPath, config)) {
+                writer.writeAllRows(rows);
+            }
+
+            System.out.printf("Wrote %d row(s) to %s%n", rows.size(), outPath);
+            System.out.println("Round-trip complete.");
+
+        } catch (Exception e) {
+            System.err.println("Error during round-trip: " + e.getMessage());
+            e.printStackTrace(System.err);
+        }
+    }
+
 }
