@@ -263,9 +263,6 @@ public class CsvReader implements Closeable, Iterable<Row> {
         do {
             row = readRow();
             if (row != null) {
-                // skip empty lines if asked to
-                if (row.isEmpty() && config.isSkipEmptyLines())
-                    continue;
                 // consume row
                 result.add(row);
             }
@@ -356,6 +353,10 @@ public class CsvReader implements Closeable, Iterable<Row> {
                 columnsCount = row.size();
             }
         }
+
+        // skip empty lines if asked to
+        if (row.isEmpty() && config.isSkipEmptyLines())
+            return readRow();
 
         // verify column count is correct
         ensureCorrectFieldCount(row);

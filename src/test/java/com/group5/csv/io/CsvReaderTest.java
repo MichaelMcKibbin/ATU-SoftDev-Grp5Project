@@ -351,6 +351,63 @@ class CsvReaderTest {
     }
 
     @Test
+    void readsDocumentSkippingEmptyLinesWithHeaders() throws IOException {
+        CsvReader reader = reader("a,b,c\n\n\nd,e\n\nf",
+                cfg -> cfg.setHasHeader(true)
+                        .setRequireUniformFieldCount(false)
+                        .setSkipEmptyLines(true),
+                new Headers(list("name1", "name2", "name3")));
+
+        List<List<String>> expectedData = rows(new String[][]{
+                {"a", "b", "c"},
+                {"d", "e", ""},
+                {"f", "", ""}
+        });
+
+        List<List<String>> expectedHeaders = rows(new String[][]{
+                {"name1", "name2", "name3"},
+                {"name1", "name2", "name3"},
+                {"name1", "name2", "name3"}
+        });
+
+        List<Row> rows = assertDoesNotThrow(reader::readAll);
+        assertEquals(3, rows.size());
+
+        for (int i = 0; i < rows.size(); ++i) {
+            assertRowEquals(rows.get(i), expectedData.get(i), expectedHeaders.get(i));
+        }
+    }
+
+    @Test
+    void readsDocumentPerRowsSkippingEmptyLinesWithHeaders() throws IOException {
+        CsvReader reader = reader("a,b,c\n\n\nd,e\n\nf",
+                cfg -> cfg.setHasHeader(true)
+                        .setRequireUniformFieldCount(false)
+                        .setSkipEmptyLines(true),
+                new Headers(list("name1", "name2", "name3")));
+
+        List<List<String>> expectedData = rows(new String[][]{
+                {"a", "b", "c"},
+                {"d", "e", ""},
+                {"f", "", ""}
+        });
+
+        List<List<String>> expectedHeaders = rows(new String[][]{
+                {"name1", "name2", "name3"},
+                {"name1", "name2", "name3"},
+                {"name1", "name2", "name3"}
+        });
+
+        for (int i = 0; i < 3; ++i) {
+            Row row = assertDoesNotThrow(reader::readRow);
+            assertRowEquals(row, expectedData.get(i), expectedHeaders.get(i));
+        }
+
+        // No more rows
+        assertNull(reader.readRow());
+    }
+
+    @Test
     void readsDocumentWithEmptyLines() throws IOException {
         CsvReader reader = reader("a,b,c\n\n\nd,e\n\nf",
                 cfg -> cfg.setHasHeader(false)
