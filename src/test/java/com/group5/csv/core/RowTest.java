@@ -1,5 +1,6 @@
 package com.group5.csv.core;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
@@ -231,5 +232,32 @@ class RowTest {
         // Missing data returns null
         assertNull(row.get("age"));
         assertNull(row.get("AGE"));
+    }
+
+    @Test
+    void testToStringNormalRow() {
+        Headers headers = new Headers(List.of("id", "name", "city"));
+        Row row = new Row(headers, List.of("1", "Alice", "Paris"));
+
+        String expected = "Row{id=1, name=Alice, city=Paris}";
+        assertEquals(expected, row.toString());
+    }
+
+    @Test
+    void testToStringEmptyRow() {
+        Headers headers = new Headers(List.of());
+        Row row = new Row(headers, List.of());
+
+        String expected = "Row{}";
+        assertEquals(expected, row.toString());
+    }
+
+    @Test
+    void testToStringSingleColumn() {
+        Headers headers = new Headers(List.of("name"));
+        Row row = new Row(headers, List.of("Bob"));
+
+        String expected = "Row{name=Bob}";
+        assertEquals(expected, row.toString());
     }
 }
