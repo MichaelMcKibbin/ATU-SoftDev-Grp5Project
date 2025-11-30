@@ -11,12 +11,10 @@ import java.util.List;
 /**
  * Low-level CSV parser that reads characters from a Reader and
  * returns one logical record at a time as a list of fields.
- *
- * This is a state machine that honours:
+ * <p>This is a state machine that honours:
  *  - delimiter and quoteChar from CsvFormat
  *  - CRLF vs LF newlines (CRLF normalised to a single end-of-row)
- *
- * It does NOT handle higher-level concerns like headers or schemas.
+ * <p>It does NOT handle higher-level concerns like headers or schemas.
  */
 public final class CsvParser {
 
@@ -33,6 +31,14 @@ public final class CsvParser {
         AFTER_QUOTE
     }
 
+    /**
+     * Creates a new parser that reads characters from the given reader using
+     * the supplied CSV dialect.
+     *
+     * @param format the CSV dialect to use (must not be null)
+     * @param reader the character source to read from (must not be null)
+     * @throws IllegalArgumentException if either argument is null
+     */
     public CsvParser(CsvFormat format, Reader reader) {
         if (format == null) throw new IllegalArgumentException("format must not be null");
         if (reader == null) throw new IllegalArgumentException("reader must not be null");
@@ -40,12 +46,16 @@ public final class CsvParser {
         this.in = new PushbackReader(reader, 2);
     }
 
+    /**
+     * Returns the CSV format (dialect) used by this parser.
+     *
+     * @return the {@link CsvFormat} instance passed to the constructor
+     */
     public CsvFormat getFormat() { return format; }
 
     /**
      * Reads the next char from the input, increments position
      * @return next char form in stream
-     * @throws IOException
      */
     private int read() throws IOException {
         ++position;
@@ -54,7 +64,6 @@ public final class CsvParser {
 
     /**
      * Uneads the given char back to the input, decrements position
-     * @throws IOException
      */
     private void unread(int ch) throws IOException {
         in.unread(ch);
@@ -64,18 +73,20 @@ public final class CsvParser {
     /**
      * Throws ParseException with position details.
      *
-     * @throws ParseException
      */
-    private void throwParseException(String msg) {
+    private void throwParseException(String msg) throws ParseException {
         throw new ParseException(msg, -1, position);
     }
 
     /**
-     * Reads the next logical row from the input.
+     * Reads the next logical CSV row.
+     * <p>A row ends at a delimiter or newline. Quoted fields may span multiple lines.
+     * CRLF pairs are normalised to a single newline.
      *
-     * @return list of cell values, or null if EOF is reached before any data
+     * @return a list of parsed field values, or {@code null} if EOF occurs
+     *         before any data is read
      * @throws IOException if the underlying reader fails
-     * @throws ParseException (runtime) if CSV syntax is invalid
+     * @throws ParseException if the input violates CSV syntax rules
      */
     public List<String> readRow() throws IOException {
         List<String> row = new ArrayList<>();
@@ -116,8 +127,13 @@ public final class CsvParser {
 
             switch (state) {
                 case START_ROW -> {
-                    unread(ch);
-                    state = State.START_CELL;
+                    // empty line -> return empty list of fields
+                    if (ch == '\n') {
+                        return row;
+                    } else {
+                        unread(ch);
+                        state = State.START_CELL;
+                    }
 //                    // first character of a new row
 //                    if (ch == '\n') {
 //                        // empty line -> return single empty cell

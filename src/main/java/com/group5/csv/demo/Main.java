@@ -37,24 +37,24 @@ public class Main {
         }
     }
 
-    /** Placeholder: previews the file without using CsvReader (keeps demo usable). */
-    private static void demoRead(Scanner sc) {
-        System.out.print("Enter CSV file path: ");
-        String path = sc.nextLine().trim();
-        Path p = Paths.get(path);
-        if (!Files.exists(p)) {
-            System.out.println("File not found. (CsvReader not fully implemented yet.)");
-            return;
-        }
-        try {
-            List<String> lines = Files.readAllLines(p); // placeholder
-            System.out.printf("Read %d line(s). Showing up to 5:%n", lines.size());
-            lines.stream().limit(5).forEach(System.out::println);
-            System.out.println("\nNote: This is a placeholder preview. Full CsvReader integration pending.");
-        } catch (IOException e) {
-            System.out.println("Could not read file (placeholder mode): " + e.getMessage());
-        }
-    }
+//    /** Placeholder: previews the file without using CsvReader (keeps demo usable). */
+//    private static void demoRead(Scanner sc) {
+//        System.out.print("Enter CSV file path: ");
+//        String path = sc.nextLine().trim();
+//        Path p = Paths.get(path);
+//        if (!Files.exists(p)) {
+//            System.out.println("File not found. (CsvReader not fully implemented yet.)");
+//            return;
+//        }
+//        try {
+//            List<String> lines = Files.readAllLines(p); // placeholder
+//            System.out.printf("Read %d line(s). Showing up to 5:%n", lines.size());
+//            lines.stream().limit(5).forEach(System.out::println);
+//            System.out.println("\nNote: This is a placeholder preview. Full CsvReader integration pending.");
+//        } catch (IOException e) {
+//            System.out.println("Could not read file (placeholder mode): " + e.getMessage());
+//        }
+//    }
 
     /** Placeholder: writes a minimal CSV using NIO (no CsvWriter yet). */
     private static void demoWrite() {
@@ -68,24 +68,24 @@ public class Main {
     }
 
 
-//    // try these when CsvReader & CsvWriter are completed
-//    private static void demoRead(Scanner sc) {
-//        try {
-//            System.out.print("Enter CSV file path: ");
-//            String path = sc.nextLine();
-//            File file = new File(path);
-//
-//            var result = InputStreamDetector.detect(file, StandardCharsets.UTF_8);
-//            CsvReader reader = new CsvReader(result.stream, result.charset);
-//
-//            List<Row> rows = reader.readAll();
-//            System.out.printf("Read %d rows.%n", rows.size());
-//            rows.stream().limit(5).forEach(System.out::println); // show first 5 rows
-//        } catch (Exception e) {
-//            System.err.println("Error reading CSV: " + e.getMessage());
-//        }
-//    }
-//
+    // try these when CsvReader & CsvWriter are completed
+    private static void demoRead(Scanner sc) {
+        try {
+            System.out.print("Enter CSV file path: ");
+            String path = sc.nextLine();
+            File file = new File(path);
+
+            var result = InputStreamDetector.detect(file, StandardCharsets.UTF_8);
+            CsvReader reader = new CsvReader(result.stream, new CsvConfig.Builder().setCharset(result.charset).build());
+
+            List<Row> rows = reader.readAll();
+            System.out.printf("Read %d rows.%n", rows.size());
+            rows.stream().limit(5).forEach(System.out::println); // show first 5 rows
+        } catch (Exception e) {
+            System.err.println("Error reading CSV: " + e.getMessage());
+        }
+    }
+
 //    private static void demoWrite() {
 //        try {
 //            File file = new File("demo_output.csv");
