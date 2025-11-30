@@ -674,6 +674,17 @@ class CsvReaderTest {
         }
 
         @Test
+        void shouldThrowIOExceptionWhenFileNotFound() {
+            Path nonExistentFile = tempDir.resolve("does-not-exist.csv");
+            assertFalse(Files.exists(nonExistentFile));
+            CsvConfig config = new CsvConfig.Builder().build();
+
+            assertThrows(IOException.class,
+                    () -> CsvReader.fromPath(nonExistentFile, config));
+        }
+
+
+        @Test
         void shouldUseProvidedCharsetWhenDetectedMatches() throws IOException {
             Path file = tempDir.resolve("utf8.csv");
 

@@ -201,11 +201,12 @@ public class CsvReader implements Closeable, Iterable<Row> {
      *
      * @param path   the CSV file path; must not be {@code null}
      * @param config the CSV configuration; must not be {@code null}
+     * @param headers the Headers object or null
      * @return a new {@link CsvReader} instance
      * @throws IllegalArgumentException if {@code path} or {@code config} is {@code null}
      * @throws IOException if an error occurs while opening the file
      */
-    public static CsvReader fromPath(Path path, CsvConfig config) throws IOException
+    public static CsvReader fromPath(Path path, CsvConfig config, Headers headers) throws IOException
     {
         if (path == null) throw new IllegalArgumentException("path must not be null");
         if (config == null) throw new IllegalArgumentException("config must not be null");
@@ -215,7 +216,7 @@ public class CsvReader implements Closeable, Iterable<Row> {
         InputStream in = detected.stream;
         CsvConfig newConfig = detected.charset.equals(config.getCharset()) ?
                 config : config.toBuilder().setCharset(detected.charset).build();
-        return new CsvReader(in, newConfig);
+        return new CsvReader(in, newConfig, headers);
     }
 
     /**
@@ -229,6 +230,19 @@ public class CsvReader implements Closeable, Iterable<Row> {
     public static CsvReader fromPath(Path path) throws IOException
     {
         return fromPath(path, createConfig());
+    }
+
+    /**
+     * Creates a {@link CsvReader} for the given {@link Path}.
+     *
+     * @param path the CSV file path; must not be {@code null}
+     * @return a new {@link CsvReader} instance
+     * @throws IllegalArgumentException if {@code path} is {@code null}
+     * @throws IOException if an error occurs while opening the file
+     */
+    public static CsvReader fromPath(Path path, CsvConfig config) throws IOException
+    {
+        return fromPath(path, config, null);
     }
 
 
