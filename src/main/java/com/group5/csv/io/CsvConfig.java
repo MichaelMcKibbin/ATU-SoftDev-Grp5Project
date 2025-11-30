@@ -33,14 +33,18 @@ public final class CsvConfig {
     private final boolean writeBOM;
     private final int readBufSize;
 
-    private CsvConfig(Builder b) {
-        this.format = b.format;
-        this.hasHeader = b.hasHeader;
-        this.requireUniformFieldCount = b.requireUniformFieldCount;
-        this.skipEmptyLines = b.skipEmptyLines;
-        this.charset = b.charset;
-        this.writeBOM = b.writeBOM;
-        this.readBufSize = b.readBufSize;
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    private CsvConfig(Builder builder) {
+        this.format = builder.format;
+        this.hasHeader = builder.hasHeader;
+        this.requireUniformFieldCount = builder.requireUniformFieldCount;
+        this.skipEmptyLines = builder.skipEmptyLines;
+        this.charset = builder.charset;
+        this.writeBOM = builder.writeBOM;
+        this.readBufSize = builder.readBufSize;
     }
 
     // Getters
