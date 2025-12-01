@@ -1,5 +1,6 @@
 package com.group5.csv.io;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -115,5 +116,76 @@ class CsvConfigTest {
         assertTrue(s.contains("skipEmptyLines=true"));
         assertTrue(s.contains("writeBOM=true"));
         assertTrue(s.contains("charset=UTF-8"));
+    }
+
+    @Nested
+    class CsvConfigToBuilderTest {
+
+        @Test
+        void toBuilderShouldCopyAllFields() {
+            CsvConfig original = new CsvConfig.Builder()
+                    .setFormat(CsvFormat.rfc4180())
+                    .setHasHeader(true)
+                    .setRequireUniformFieldCount(true)
+                    .setSkipEmptyLines(false)
+                    .setCharset(StandardCharsets.ISO_8859_1)
+                    .setWriteBOM(false)
+                    .setReadBufSize(16384)
+                    .build();
+
+            CsvConfig copy = original.toBuilder().build();
+
+            assertEquals(original.getFormat(), copy.getFormat());
+            assertEquals(original.hasHeader(), copy.hasHeader());
+            assertEquals(original.isRequireUniformFieldCount(), copy.isRequireUniformFieldCount());
+            assertEquals(original.isSkipEmptyLines(), copy.isSkipEmptyLines());
+            assertEquals(original.getCharset(), copy.getCharset());
+            assertEquals(original.isWriteBOM(), copy.isWriteBOM());
+            assertEquals(original.getReadBufSize(), copy.getReadBufSize());
+        }
+
+        @Test
+        void toBuilderShouldAllowSelectiveOverride() {
+            CsvConfig original = new CsvConfig.Builder()
+                    .setHasHeader(true)
+                    .setCharset(StandardCharsets.UTF_8)
+                    .build();
+
+            CsvConfig modified = original
+                    .toBuilder()
+                    .setCharset(StandardCharsets.UTF_16)
+                    .setHasHeader(false)
+                    .build();
+
+            // Changed fields
+            assertEquals(StandardCharsets.UTF_16, modified.getCharset());
+            assertFalse(modified.hasHeader());
+
+            // Preserved fields
+            assertEquals(original.getFormat(), modified.getFormat());
+            assertEquals(original.isSkipEmptyLines(), modified.isSkipEmptyLines());
+            assertEquals(original.getReadBufSize(), modified.getReadBufSize());
+
+            // Original unchanged (immutability)
+            assertEquals(StandardCharsets.UTF_8, original.getCharset());
+            assertTrue(original.hasHeader());
+        }
+
+        @Test
+        void toBuilderShouldReturnIndependentBuilderInstances() {
+            CsvConfig original = new CsvConfig.Builder().build();
+
+            CsvConfig.Builder b1 = original.toBuilder().setSkipEmptyLines(false);
+            CsvConfig.Builder b2 = original.toBuilder().setSkipEmptyLines(true);
+
+            CsvConfig c1 = b1.build();
+            CsvConfig c2 = b2.build();
+
+            assertFalse(c1.isSkipEmptyLines());
+            assertTrue(c2.isSkipEmptyLines());
+
+            // original is still default
+            assertTrue(original.isSkipEmptyLines());
+        }
     }
 }

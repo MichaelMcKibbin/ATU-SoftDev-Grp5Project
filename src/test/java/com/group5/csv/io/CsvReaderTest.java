@@ -6,11 +6,14 @@ import com.group5.csv.exceptions.ParseException;
 import com.group5.csv.testutils.VirtualReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -640,7 +643,132 @@ class CsvReaderTest {
             // Act & Assert
             var it = r.iterator();
             UncheckedIOException ex = assertThrows(UncheckedIOException.class, it::next);
-            assertTrue(ex.getCause() instanceof IOException);
+            assertInstanceOf(IOException.class, ex.getCause());
+        }
+    }
+
+    @Nested
+    class CsvReaderFromPathTest {
+
+        @TempDir
+        Path tempDir;
+
+        @Test
+        void shouldThrowExceptionWhenPathIsNull() {
+            CsvConfig config = new CsvConfig.Builder().build();
+
+            Exception exception = assertThrows(IllegalArgumentException.class,
+                    () -> CsvReader.fromPath(null, config));
+
+            assertEquals("path must not be null", exception.getMessage());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenConfigIsNull() {
+            Path path = tempDir.resolve("test.csv");
+
+            Exception exception = assertThrows(IllegalArgumentException.class,
+                    () -> CsvReader.fromPath(path, null));
+
+            assertEquals("config must not be null", exception.getMessage());
+        }
+
+        @Test
+        void shouldThrowIOExceptionWhenFileNotFound() {
+            Path nonExistentFile = tempDir.resolve("does-not-exist.csv");
+            assertFalse(Files.exists(nonExistentFile));
+            CsvConfig config = new CsvConfig.Builder().build();
+
+            assertThrows(IOException.class,
+                    () -> CsvReader.fromPath(nonExistentFile, config));
+        }
+
+
+        @Test
+        void shouldUseProvidedCharsetWhenDetectedMatches() throws IOException {
+            Path file = tempDir.resolve("utf8.csv");
+
+            Files.writeString(file,
+                    "name,age\nAlice,30");
+
+            CsvConfig config = new CsvConfig.Builder()
+                    .setCharset(StandardCharsets.UTF_8)
+                    .build();
+
+            try (CsvReader reader = CsvReader.fromPath(file, config)) {
+
+                assertNotNull(reader);
+                assertEquals(StandardCharsets.UTF_8, reader.getConfig().getCharset());
+            }
+        }
+
+        @Test
+        void shouldNotOverrideCharsetWhenNoBomIsPresent() throws IOException {
+            Path file = tempDir.resolve("latin1.csv");
+
+            Files.writeString(file,
+                    "name,city\nRené,Paris", StandardCharsets.ISO_8859_1);
+
+            CsvConfig originalConfig = new CsvConfig.Builder()
+                    .setCharset(StandardCharsets.UTF_8) // UTF-8 family → detection allowed
+                    .setHasHeader(true)
+                    .setSkipEmptyLines(true)
+                    .build();
+
+            CsvConfig resolvedConfig;
+            try (CsvReader reader = CsvReader.fromPath(file, originalConfig)) {
+
+                assertNotNull(reader);
+                resolvedConfig = reader.getConfig();
+            }
+
+            // No BOM present → charset must remain unchanged
+            assertEquals(StandardCharsets.UTF_8, resolvedConfig.getCharset());
+
+            // Other values preserved
+            assertEquals(originalConfig.hasHeader(), resolvedConfig.hasHeader());
+            assertEquals(originalConfig.isSkipEmptyLines(), resolvedConfig.isSkipEmptyLines());
+        }
+
+        @Test
+        void shouldCreateNewConfigOnlyWhenCharsetDiffers() throws IOException {
+            Path file = tempDir.resolve("utf8.csv");
+
+            Files.writeString(file,
+                    "col\nvalue");
+
+            CsvConfig config = new CsvConfig.Builder()
+                    .setCharset(StandardCharsets.UTF_8)
+                    .build();
+
+            try (CsvReader reader = CsvReader.fromPath(file, config)) {
+
+                // Same charset -> same instance is reused
+                assertSame(config, reader.getConfig());
+            }
+        }
+
+        @Test
+        void shouldCreateReaderUsingDefaultConfig() throws IOException {
+            Path file = tempDir.resolve("default.csv");
+
+            Files.writeString(file,
+                    "name,city\nAlice,London",
+                    StandardCharsets.UTF_8);
+
+            try (CsvReader reader = CsvReader.fromPath(file)) {
+
+                assertNotNull(reader);
+
+                CsvConfig config = reader.getConfig();
+
+                // Validate default config is in use
+                assertEquals(StandardCharsets.UTF_8, config.getCharset());
+                assertTrue(config.isSkipEmptyLines());
+                assertTrue(config.hasHeader());
+                assertTrue(config.isWriteBOM());
+                assertEquals(8192, config.getReadBufSize());
+            }
         }
     }
 
