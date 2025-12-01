@@ -140,4 +140,21 @@ public class Headers {
     public List<String> getColumnNames() {
         return Collections.unmodifiableList(columnNames);
     }
+
+    /**
+     * Returns a string representation of the headers in a readable format.
+     *
+     * @return a string showing the headers values with their numbers
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Row{");
+        for (int i = 0; i < columnNames.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(i + 1).append("=").append(columnNames.get(i));
+        }
+        sb.append("}");
+        return sb.toString();
+    }
 }

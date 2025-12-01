@@ -267,6 +267,30 @@ class HeadersTest {
             columns.add("email");
         });
     }
+
+    @Test
+    void testToStringMultipleColumns() {
+        Headers headers = new Headers(List.of("id", "name", "city"));
+
+        String expected = "Row{1=id, 2=name, 3=city}";
+        assertEquals(expected, headers.toString());
+    }
+
+    @Test
+    void testToStringSingleColumn() {
+        Headers headers = new Headers(List.of("name"));
+
+        String expected = "Row{1=name}";
+        assertEquals(expected, headers.toString());
+    }
+
+    @Test
+    void testToStringEmptyHeaders() {
+        Headers headers = new Headers(List.of());
+
+        String expected = "Row{}";
+        assertEquals(expected, headers.toString());
+    }
     
     // Integration Test
     
