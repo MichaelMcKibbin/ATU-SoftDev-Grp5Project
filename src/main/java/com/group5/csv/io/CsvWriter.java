@@ -11,9 +11,11 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -47,40 +49,33 @@ public final class CsvWriter implements Closeable, Flushable {
     private final CsvConfig config;
     private final Writer out;
     private final CsvPrinter printer;
+    private final OutputStream outRaw; // for BOM support
+    private boolean isWritingStarted = false;
 
     /** Whether a header row has already been written. */
     private boolean headerWritten = false;
 
     /**
-     * Primary constructor: wraps the given {@link Writer} and uses the
+     * Primary constructor: wraps the given {@link OutputStream} and uses the
      * dialect from {@link CsvConfig#getFormat()}.
      *
-     * @param out    destination text stream (will be wrapped in BufferedWriter if necessary)
+     * @param out    destination output stream (will be wrapped in BufferedWriter)
      * @param config CSV configuration / dialect
      */
-    public CsvWriter(Writer out, CsvConfig config) {
+    public CsvWriter(OutputStream out, CsvConfig config) {
         if (out == null) throw new IllegalArgumentException("out must not be null");
         if (config == null) throw new IllegalArgumentException("config must not be null");
 
         this.config = config;
+        this.outRaw = out;
 
         // Ensure we have buffering; avoid double-wrapping if caller already supplied one.
-        Writer effectiveOut = (out instanceof BufferedWriter) ? out : new BufferedWriter(out);
+        OutputStreamWriter osw = new OutputStreamWriter(out, config.getCharset());
+        Writer effectiveOut = new BufferedWriter(osw);
         this.out = effectiveOut;
 
         // CsvPrinter is the low-level, dialect-aware writer.
         this.printer = new CsvPrinter(effectiveOut, config.getFormat());
-    }
-
-    /**
-     * Convenience constructor: create a writer from a byte stream using
-     * the charset defined in the config.
-     */
-    public CsvWriter(OutputStream out, CsvConfig config) {
-        this(new OutputStreamWriter(
-                Objects.requireNonNull(out, "out must not be null"),
-                Objects.requireNonNull(config, "config must not be null").getCharset()
-        ), config);
     }
 
     /**
@@ -91,16 +86,96 @@ public final class CsvWriter implements Closeable, Flushable {
      * for demo / main.
      */
     public static CsvWriter toPath(Path path, CsvConfig config) throws IOException {
-        Objects.requireNonNull(path, "path must not be null");
-        Objects.requireNonNull(config, "config must not be null");
-
-        Charset cs = config.getCharset();
-        Writer fileWriter = Files.newBufferedWriter(path, cs);
-        return new CsvWriter(fileWriter, config);
+        OutputStream out = Files.newOutputStream(path);
+        return new CsvWriter(out, config);
     }
+
+//    /**
+//     * Primary constructor: wraps the given {@link Writer} and uses the
+//     * dialect from {@link CsvConfig#getFormat()}.
+//     *
+//     * @param out    destination text stream (will be wrapped in BufferedWriter if necessary)
+//     * @param config CSV configuration / dialect
+//     */
+//    public CsvWriter(Writer out, CsvConfig config) {
+//        if (out == null) throw new IllegalArgumentException("out must not be null");
+//        if (config == null) throw new IllegalArgumentException("config must not be null");
+//
+//        this.config = config;
+//
+//        // Ensure we have buffering;
+//        Writer effectiveOut = (out instanceof BufferedWriter) ? out : new BufferedWriter(out);
+//        this.out = effectiveOut;
+//
+//        this.outRaw = null; // writing BOM unsupported
+//
+//        // CsvPrinter is the low-level, dialect-aware writer.
+//        this.printer = new CsvPrinter(effectiveOut, config.getFormat());
+//    }
+
+//    /**
+//     * Convenience constructor: create a writer from a byte stream using
+//     * the charset defined in the config.
+//     */
+//    public CsvWriter(OutputStream out, CsvConfig config) {
+//        this(new OutputStreamWriter(
+//                Objects.requireNonNull(out, "out must not be null"),
+//                Objects.requireNonNull(config, "config must not be null").getCharset()
+//        ), config, out);
+//    }
+
+
+//    /**
+//     * Convenience factory: open a file for writing using the charset and
+//     * dialect from the supplied config.
+//     *
+//     * This mirrors the {@code CsvReader.fromPath(...)} style and is handy
+//     * for demo / main.
+//     */
+//    public static CsvWriter toPath(Path path, CsvConfig config) throws IOException {
+//        Objects.requireNonNull(path, "path must not be null");
+//        Objects.requireNonNull(config, "config must not be null");
+//
+//        Charset cs = config.getCharset();
+//        Writer fileWriter = Files.newBufferedWriter(path, cs);
+//        return new CsvWriter(fileWriter, config);
+//    }
 
     public CsvConfig getConfig() {
         return config;
+    }
+
+    private void ensureOutputPrefix(List<String> headers) throws IOException
+    {
+        if (isWritingStarted) return;
+
+        // do this only once
+        isWritingStarted = true;
+
+        // write BOM sequence
+        if (config.isWriteBOM() && outRaw != null)
+        {
+            writeBomIfSupported(config.getCharset());
+        }
+
+        // write Headers
+        if (config.hasHeader() && headers != null) {
+            writeHeader(headers);
+        }
+    }
+
+    private void writeBomIfSupported(Charset charset) throws IOException {
+        final Map<String, byte[]> BOM_MAP = Map.of(
+                "UTF-8", new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF},
+                "UTF-16LE", new byte[]{(byte) 0xFF, (byte) 0xFE},
+                "UTF-16BE", new byte[]{(byte) 0xFE, (byte) 0xFF},
+                "UTF-32LE", new byte[]{(byte) 0xFF, (byte) 0xFE, 0x00, 0x00},
+                "UTF-32BE", new byte[]{0x00, 0x00, (byte) 0xFE, (byte) 0xFF}
+        );
+        byte[] bom = BOM_MAP.get(charset.name().toUpperCase());
+        if (bom != null) {
+            outRaw.write(bom);
+        }
     }
 
     /**
@@ -122,6 +197,7 @@ public final class CsvWriter implements Closeable, Flushable {
         if (headerWritten) {
             throw new IllegalStateException("Header row has already been written");
         }
+        ensureOutputPrefix(null);
         printer.printRow(headerCells);
         headerWritten = true;
     }
@@ -141,6 +217,8 @@ public final class CsvWriter implements Closeable, Flushable {
         if (values == null) {
             throw new IllegalArgumentException("values must not be null");
         }
+
+        ensureOutputPrefix(null);
 
         // Convert all values to String for CsvPrinter
         // (CsvPrinter is purely about CSV syntax, not typing).
@@ -174,6 +252,8 @@ public final class CsvWriter implements Closeable, Flushable {
 
         Headers headers = row.getHeaders();   // adjust method name if needed
         int columnCount = headers.size();     // adjust if you use a different API
+
+        ensureOutputPrefix(headers.getColumnNames());
 
         newRowBuffer.clear();
         for (int i = 0; i < columnCount; i++) {

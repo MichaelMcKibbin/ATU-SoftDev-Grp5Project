@@ -18,7 +18,7 @@ class CsvConfigTest {
         assertFalse(config.isRequireUniformFieldCount());
         assertTrue(config.isSkipEmptyLines());
         assertEquals(StandardCharsets.UTF_8, config.getCharset());
-        assertTrue(config.isWriteBOM());
+        assertFalse(config.isWriteBOM());
         assertEquals(8192, config.getReadBufSize());
     }
 

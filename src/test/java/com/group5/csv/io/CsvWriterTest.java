@@ -4,6 +4,8 @@ import com.group5.csv.core.*;
 import com.group5.csv.exceptions.ParseException;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -152,24 +154,25 @@ class CsvWriterTest {
     }
 
     /**
-     * Verifies that constructing CsvWriter with a BufferedWriter uses the provided
+     * Verifies that constructing CsvWriter with an OutputStream uses the provided
      * configuration and successfully writes a simple row.
      */
     @Test
-    void writerConstructor_usesGivenConfigAndBufferedWriter() throws IOException {
-        StringWriter sw = new StringWriter();
-        BufferedWriter bw = new BufferedWriter(sw);
+    void writerConstructor_usesGivenConfig() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         CsvConfig config = CsvConfig.builder()
                 .setFormat(CsvFormat.rfc4180())
                 .setHasHeader(false)
                 .build();
 
-        CsvWriter writer = new CsvWriter(bw, config);
+        CsvWriter writer = new CsvWriter(out, config);
 
         assertSame(config, writer.getConfig());
         writer.writeRow(List.of("a", "b"));
         writer.close();
+        String content = out.toString(StandardCharsets.UTF_8);
+        assertEquals("a,b\n", content);
     }
 
     /**
@@ -342,19 +345,19 @@ class CsvWriterTest {
         CsvConfig config = CsvConfig.builder().build();
 
         assertThrows(IllegalArgumentException.class, () ->
-                new CsvWriter((Writer) null, config));
+                new CsvWriter((OutputStream) null, config));
     }
 
     /**
-     * Verifies that the CsvWriter(Writer, CsvConfig) constructor throws an
+     * Verifies that the CsvWriter(OutputStream, CsvConfig) constructor throws an
      * IllegalArgumentException when the CsvConfig argument is null.
      */
     @Test
     void constructor_nullConfig_throwsIllegalArgumentException() {
-        StringWriter sw = new StringWriter();
+        OutputStream out = new ByteArrayOutputStream();
 
         assertThrows(IllegalArgumentException.class, () ->
-                new CsvWriter(sw, null));
+                new CsvWriter(out, null));
     }
 
     /**
@@ -400,6 +403,128 @@ class CsvWriterTest {
 
         String result = out.toString(config.getCharset());
         assertEquals("a,,c\n", result);
+    }
+
+    @Nested
+    class CsvWriterPrefixTest {
+
+        @Test
+        void writesBomBeforeDataWhenEnabledAndUtf8() throws Exception {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            CsvConfig config = CsvConfig.builder()
+                    .setCharset(StandardCharsets.UTF_8)
+                    .setWriteBOM(true)
+                    .setHasHeader(false)
+                    .build();
+
+            try (CsvWriter writer = new CsvWriter(out, config)) {
+                writer.writeRow(List.of("A", "B", "C"));
+            }
+
+            byte[] result = out.toByteArray();
+
+            // UTF-8 BOM
+            assertEquals((byte) 0xEF, result[0]);
+            assertEquals((byte) 0xBB, result[1]);
+            assertEquals((byte) 0xBF, result[2]);
+
+            String content = new String(result, 3, result.length - 3, StandardCharsets.UTF_8);
+            assertTrue(content.startsWith("A,B,C"), "Data should follow BOM");
+        }
+
+        @Test
+        void writesBomBeforeDataWhenEnabledAndUtf16() throws Exception {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            CsvConfig config = CsvConfig.builder()
+                    .setCharset(StandardCharsets.UTF_16BE)
+                    .setWriteBOM(true)
+                    .setHasHeader(false)
+                    .build();
+
+            try (CsvWriter writer = new CsvWriter(out, config)) {
+                writer.writeRow(List.of("A", "B", "C"));
+            }
+
+            byte[] result = out.toByteArray();
+            // UTF-16 BOM
+            assertEquals((byte) 0xFE, result[0]);
+            assertEquals((byte) 0xFF, result[1]);
+
+            String content = new String(result, 2, result.length - 2, StandardCharsets.UTF_16);
+            assertTrue(content.startsWith("A,B,C"), "Data should follow BOM");
+        }
+
+        @Test
+        void doesNotWriteBomWhenDisabled() throws Exception {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            CsvConfig config = CsvConfig.builder()
+                    .setCharset(StandardCharsets.UTF_8)
+                    .setWriteBOM(false)
+                    .build();
+
+            try (CsvWriter writer = new CsvWriter(out, config)) {
+                writer.writeRow(List.of("1", "2"));
+            }
+
+            byte[] result = out.toByteArray();
+
+            // Must NOT start with UTF-8 BOM
+            assertFalse(
+                    result.length >= 3 &&
+                            result[0] == (byte) 0xEF &&
+                            result[1] == (byte) 0xBB &&
+                            result[2] == (byte) 0xBF
+            );
+        }
+
+        @Test
+        void autoWritesHeaderOnFirstRowWhenConfigured() throws Exception {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            CsvConfig config = CsvConfig.builder()
+                    .setCharset(StandardCharsets.UTF_8)
+                    .setHasHeader(true)
+                    .setWriteBOM(false)
+                    .build();
+
+            try (CsvWriter writer = new CsvWriter(out, config)) {
+                Row row = new Row(new Headers(2), List.of("1", "2"));
+                writer.writeRow(row);
+            }
+
+            String result = out.toString(StandardCharsets.UTF_8);
+
+            // Header should be written before data
+            String[] lines = result.split("\\R");
+
+            assertEquals(2, lines.length);
+            assertEquals("1,2", lines[1]); // data
+        }
+
+        @Test
+        void ensurePrefixRunsOnlyOnce() throws Exception {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            CsvConfig config = CsvConfig.builder()
+                    .setCharset(StandardCharsets.UTF_8)
+                    .setWriteBOM(true)
+                    .setHasHeader(false)
+                    .build();
+
+            try (CsvWriter writer = new CsvWriter(out, config)) {
+                writer.writeRow(List.of("A"));
+                writer.writeRow(List.of("B"));
+            }
+
+            byte[] result = out.toByteArray();
+
+            // BOM should appear ONLY at the beginning
+            assertEquals((byte) 0xEF, result[0]);
+            assertNotEquals((byte) 0xEF, result[1], "BOM written more than once");
+        }
     }
 
 }
