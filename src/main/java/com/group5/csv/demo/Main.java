@@ -9,7 +9,30 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+/**
+ * Console-based demo entry point for the CSV Data Processor project.
+ * <p>
+ * This class exposes a simple text menu that allows the user to:
+ * </p>
+ * <ul>
+ *     <li>Experiment with {@link CsvReader} configuration (charset, headers, dialect, etc.)</li>
+ *     <li>Run round-trip demonstrations for different CSV dialects
+ *         (comma, semicolon, tab-delimited)</li>
+ *     <li>Generate a small placeholder CSV file for quick testing</li>
+ * </ul>
+ * <p>
+ * It is intended as a lightweight developer and examiner-facing tool to
+ * showcase the core capabilities of the CSV engine.
+ * </p>
+ */
 public class Main {
+
+    /**
+     * Application entry point. Displays the main menu and dispatches user
+     * choices to the appropriate demo methods until the user chooses to exit.
+     *
+     * @param args command-line arguments (not used)
+     */
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         System.out.println("=== CSV Data Processor Demo ===");
@@ -19,7 +42,10 @@ public class Main {
             System.out.println("1) Read CSV file");
             System.out.println("2) Write sample CSV");
             System.out.println("3) Validate CSV (Schema placeholder)");
-            System.out.println("4) Round-trip CSV (read & write using CsvReader/CsvWriter)");
+            System.out.println("4) Round-trip CSV (comma: RFC-4180)");
+            System.out.println("5) Round-trip CSV (semicolon: Excel dialect)");
+            System.out.println("6) Round-trip CSV (tab-delimited: TSV)");
+
             System.out.println("0) Exit");
             System.out.print("Choose option: ");
 
@@ -28,7 +54,10 @@ public class Main {
                 case "1" -> demoReadMenu(sc);
                 case "2" -> demoWrite();
                 case "3" -> System.out.println("Schema validation not yet implemented.");
-                case "4" -> demoRoundTrip(sc);
+                case "4" -> demoRoundTripComma(sc);
+                case "5" -> demoRoundTripSemicolon(sc);
+                case "6" -> demoRoundTripTab(sc);
+
                 case "0" -> {
                     System.out.println("Goodbye!");
                     return;
@@ -57,7 +86,13 @@ public class Main {
 //        }
 //    }
 
-    /** Placeholder: writes a minimal CSV using NIO (no CsvWriter yet). */
+    /**
+     * Placeholder demonstration that writes a minimal CSV file using NIO only.
+     * <p>
+     * This does not use {@link CsvWriter}; it exists to provide a very simple
+     * "write a file" example alongside the richer round-trip demos.
+     * </p>
+     */
     private static void demoWrite() {
         Path out = Paths.get("demo_output.csv");
         try {
@@ -95,9 +130,20 @@ public class Main {
     }
 
     /**
-     * Interactive menu for configuring and testing CsvReader.
+     * Interactive menu for configuring and testing {@link CsvReader}.
+     * <p>
+     * Allows the user to adjust:
+     * </p>
+     * <ul>
+     *     <li>Input file path</li>
+     *     <li>Charset</li>
+     *     <li>Header presence and manual header override</li>
+     *     <li>Empty-line skipping</li>
+     *     <li>CSV dialect ({@link CsvFormat})</li>
+     *     <li>Maximum number of lines to display</li>
+     * </ul>
      *
-     * @param sc Scanner for user input
+     * @param sc scanner for user input
      */
     private static void demoReadMenu(Scanner sc) {
         String path = "demo_input.csv";
@@ -176,10 +222,28 @@ public class Main {
 
     // ----- CSV read demonstration Helpers -----
 
+    /**
+     * Supported high-level CSV dialect labels used by the demo menu.
+     * <p>
+     * These map to concrete {@link CsvFormat} presets such as
+     * {@link CsvFormat#rfc4180()}, {@link CsvFormat#excel()},
+     * {@link CsvFormat#excel_semicolon()}, {@link CsvFormat#tsv()},
+     * and {@link CsvFormat#json_csv()}.
+     * </p>
+     */
     private enum CsvDialect {
         RFC4180, EXCEL, EXCEL_SEMICOLON, TSV, JSON_CSV
     }
 
+    /**
+     * Handles interactive charset changes for {@link CsvConfig} in the
+     * reader demo menu.
+     *
+     * @param sc     scanner for user input
+     * @param config current CSV configuration
+     * @return a new {@link CsvConfig} with the requested charset,
+     *         or the original config if the charset is invalid
+     */
     private static CsvConfig handleCharsetChange(Scanner sc, CsvConfig config) {
         System.out.println("Examples: US_ASCII, ISO_8859_1, UTF_8, UTF_16, UTF_32...");
         String cs = prompt(sc, "Enter file charset: ");
@@ -194,6 +258,14 @@ public class Main {
         }
     }
 
+    /**
+     * Prompts the user for a column count and a sequence of column names,
+     * then constructs a {@link Headers} instance.
+     *
+     * @param sc scanner for user input
+     * @return a new {@link Headers} instance, or {@code null} if the input
+     *         is invalid or the process is aborted
+     */
     private static Headers handleHeaderOverride(Scanner sc) {
         String input = prompt(sc, "Enter column count: ");
         if (!input.matches("\\d+")) {
@@ -221,8 +293,21 @@ public class Main {
         return new Headers(columnNames);
     }
 
+    /**
+     * Small record tying together a high-level dialect label and the
+     * concrete {@link CsvFormat} instance used by the demo.
+     */
     private record CsvDialectResult(CsvDialect dialect, CsvFormat format) {}
 
+    /**
+     * Handles interactive CSV dialect selection and returns the chosen
+     * dialect together with its corresponding {@link CsvFormat}.
+     *
+     * @param sc scanner for user input
+     * @return a {@link CsvDialectResult} containing the chosen dialect
+     *         and format, or {@code null} if the user cancels or selects
+     *         an unknown option
+     */
     private static CsvDialectResult handleDialectChange(Scanner sc) {
         System.out.println("Choose CSV dialect:");
         System.out.println("1) RFC4180");
@@ -244,15 +329,39 @@ public class Main {
         };
     }
 
+    /**
+     * Prompts the user with a yes/no question and returns {@code true}
+     * if the user answers with "y" (case-insensitive).
+     *
+     * @param sc     scanner for user input
+     * @param prompt message to display to the user
+     * @return {@code true} if the user answers "y", {@code false} otherwise
+     */
     private static boolean askYesNo(Scanner sc, String prompt) {
         return prompt(sc, prompt).trim().equalsIgnoreCase("y");
     }
 
+    /**
+     * Utility method for prompting the user and reading a trimmed line
+     * of input from the console.
+     *
+     * @param sc      scanner for user input
+     * @param message message to display before reading input
+     * @return the trimmed user input string (possibly empty)
+     */
     private static String prompt(Scanner sc, String message) {
         System.out.print(message);
         return sc.nextLine().trim();
     }
 
+    /**
+     * Parses a user-supplied maximum line count, falling back to the
+     * previous value if the input is not a valid integer.
+     *
+     * @param sc       scanner for user input
+     * @param previous previous max line count to retain on error
+     * @return the new max line count, or the previous value if parsing fails
+     */
     private static long handleMaxLines(Scanner sc, long previous) {
         System.out.print("Enter max number of lines to display (negative for unlimited): ");
         String input = sc.nextLine().trim();
@@ -264,19 +373,20 @@ public class Main {
         }
     }
 
-
     /**
-     * Demonstrates a simple CSV round-trip:
-     *  - read rows with CsvReader
-     *  - display a preview in the console
-     *  - write all rows back out with CsvWriter
+     * Round-trip demo using tab-delimited CSV (TSV format).
+     * Demonstrates {@link CsvReader} → {@link Row} → {@link CsvWriter} with {@link CsvFormat#tsv()}.
+     * Uses a default demo file if the user leaves the input path blank.
+     *
+     * @param sc scanner for user input
      */
-    private static void demoRoundTrip(Scanner sc) {
-        System.out.print("Enter input CSV file path: ");
+    private static void demoRoundTripTab(Scanner sc) {
+        System.out.print("Enter input TSV file path (blank = demo_input_tab.tsv): ");
         String inPathStr = sc.nextLine().trim();
+
         if (inPathStr.isEmpty()) {
-            System.out.println("No path entered, aborting.");
-            return;
+            inPathStr = "src/main/resources/demo/demo_input_tab.tsv";
+            System.out.println("Using default demo file: " + inPathStr);
         }
 
         Path inPath = Paths.get(inPathStr);
@@ -285,46 +395,144 @@ public class Main {
             return;
         }
 
-        System.out.print("Enter output CSV file path (leave blank for demo_output.csv): ");
+        System.out.print("Enter output filename (blank = demo_output_tab.csv): ");
         String outPathStr = sc.nextLine().trim();
-        if (outPathStr.isEmpty()) {
-            outPathStr = "demo_output.csv";
-        }
+        if (outPathStr.isEmpty()) outPathStr = "demo_output_tab.csv";
         Path outPath = Paths.get(outPathStr);
 
-        // For demo purposes we use RFC-4180 with a header row.
+        CsvConfig config = CsvConfig.builder()
+                .setFormat(CsvFormat.tsv())
+                .setHasHeader(true)
+                .setRequireUniformFieldCount(true)
+                .build();
+
+        try (CsvReader reader = new CsvReader(
+                Files.newBufferedReader(inPath, config.getCharset()), config)) {
+
+            List<Row> rows = reader.readAll();
+            System.out.printf("Read %d row(s)%n", rows.size());
+            rows.stream().limit(5).forEach(System.out::println);
+
+            try (CsvWriter writer = CsvWriter.toPath(outPath, config)) {
+                writer.writeAllRows(rows);
+            }
+
+            System.out.println("Done! Wrote to: " + outPath);
+
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+
+    /**
+     * Round-trip demo using semicolon-delimited CSV (Excel-style dialect).
+     * Demonstrates {@link CsvReader} → {@link Row} → {@link CsvWriter} with
+     * {@link CsvFormat#excel_semicolon()}. Uses a default demo file if the user
+     * leaves the input path blank.
+     *
+     * @param sc scanner for user input
+     */
+    private static void demoRoundTripSemicolon(Scanner sc) {
+        System.out.print("Enter input CSV path (blank = demo_input_semicolon.csv): ");
+        String inPathStr = sc.nextLine().trim();
+
+        if (inPathStr.isEmpty()) {
+            inPathStr = "src/main/resources/demo/demo_input_semicolon.csv";
+            System.out.println("Using default demo file: " + inPathStr);
+        }
+
+        Path inPath = Paths.get(inPathStr);
+        if (!Files.exists(inPath)) {
+            System.out.println("Input file not found: " + inPath);
+            return;
+        }
+
+        System.out.print("Enter output file name (blank = demo_output_semicolon.csv): ");
+        String outPathStr = sc.nextLine().trim();
+        if (outPathStr.isEmpty()) outPathStr = "demo_output_semicolon.csv";
+        Path outPath = Paths.get(outPathStr);
+
+        CsvConfig config = CsvConfig.builder()
+                .setFormat(CsvFormat.excel_semicolon())
+                .setHasHeader(true)
+                .setRequireUniformFieldCount(true)
+                .build();
+
+        try (CsvReader reader = new CsvReader(
+                Files.newBufferedReader(inPath, config.getCharset()), config)) {
+
+            List<Row> rows = reader.readAll();
+            System.out.printf("Read %d row(s)%n", rows.size());
+            rows.stream().limit(5).forEach(System.out::println);
+
+            try (CsvWriter writer = CsvWriter.toPath(outPath, config)) {
+                writer.writeAllRows(rows);
+            }
+
+            System.out.println("Done! Wrote to: " + outPath);
+
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+
+    /**
+     * Demonstrates a simple CSV round-trip using a comma-delimited
+     * RFC-4180 dialect:
+     * <ul>
+     *     <li>Reads rows with {@link CsvReader}</li>
+     *     <li>Displays a small preview in the console</li>
+     *     <li>Writes all rows back out with {@link CsvWriter}</li>
+     * </ul>
+     * Uses a default demo file if the user leaves the input path blank.
+     *
+     * @param sc scanner for user input
+     */
+    private static void demoRoundTripComma(Scanner sc) {
+        System.out.print("Enter input CSV file path (leave blank for demo_input_comma.csv): ");
+        String inPathStr = sc.nextLine().trim();
+
+        if (inPathStr.isEmpty()) {
+            inPathStr = "src/main/resources/demo/demo_input_comma.csv";
+            System.out.println("Using default demo file: " + inPathStr);
+        }
+
+        Path inPath = Paths.get(inPathStr);
+        if (!Files.exists(inPath)) {
+            System.out.println("Input file not found: " + inPath);
+            return;
+        }
+
+        System.out.print("Enter output CSV file path (blank = demo_output_comma.csv): ");
+        String outPathStr = sc.nextLine().trim();
+        if (outPathStr.isEmpty()) outPathStr = "demo_output_comma.csv";
+        Path outPath = Paths.get(outPathStr);
+
         CsvConfig config = CsvConfig.builder()
                 .setFormat(CsvFormat.rfc4180())
                 .setHasHeader(true)
                 .setRequireUniformFieldCount(true)
                 .build();
 
-        try (
-                // Reader side: use CsvReader with the configured charset and format
-                CsvReader reader = CsvReader.fromPath(inPath, config)
-        ) {
+        try (CsvReader reader = new CsvReader(
+                Files.newBufferedReader(inPath, config.getCharset()), config)) {
+
             List<Row> rows = reader.readAll();
-            System.out.printf("Read %d row(s) from %s%n", rows.size(), inPath);
+            System.out.printf("Read %d row(s)%n", rows.size());
+            rows.stream().limit(5).forEach(System.out::println);
 
-            // Show a small preview in the console
-            System.out.println("--- Preview (up to 5 rows) ---");
-            rows.stream()
-                    .limit(5)
-                    .forEach(System.out::println);
-            System.out.println("------------------------------");
-
-            // Writer side: round-trip the same rows to the output file
             try (CsvWriter writer = CsvWriter.toPath(outPath, config)) {
                 writer.writeAllRows(rows);
             }
 
-            System.out.printf("Wrote %d row(s) to %s%n", rows.size(), outPath);
-            System.out.println("Round-trip complete.");
+            System.out.println("Done! Wrote to: " + outPath);
 
         } catch (Exception e) {
-            System.err.println("Error during round-trip: " + e.getMessage());
-            e.printStackTrace(System.err);
+            System.err.println("Error: " + e.getMessage());
         }
     }
+
 
 }
