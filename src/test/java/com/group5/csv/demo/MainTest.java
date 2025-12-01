@@ -175,17 +175,12 @@ class MainTest {
 
 
 
-    /** Convenience to invoke the private static demoRoundTrip(Scanner) method via reflection. */
-    private void invokeDemoRoundTrip(Scanner scanner) throws Exception {
-        Method m = Main.class.getDeclaredMethod("demoRoundTrip", Scanner.class);
-        m.setAccessible(true);
-        m.invoke(null, scanner);
-    }
+
 
     @Test
-    void roundTrip_withExplicitOutputPath() throws Exception {
-        // Create a temporary directory and a simple CSV input file
-        Path tempDir = Files.createTempDirectory("roundtrip-explicit");
+    void main_roundTripOption_withExplicitOutputPath() throws Exception {
+        // Create a temp directory + input CSV
+        Path tempDir = Files.createTempDirectory("roundtrip-main-explicit");
         Path inputCsv = tempDir.resolve("input.csv");
         List<String> lines = List.of(
                 "id,name,age",
@@ -196,22 +191,28 @@ class MainTest {
 
         Path outputCsv = tempDir.resolve("output.csv");
 
-        // Scripted "user input" for demoRoundTrip:
-        //   1) first line: full path to input CSV
-        //   2) second line: full path to output CSV
-        String script = inputCsv.toString() + System.lineSeparator()
-                + outputCsv.toString() + System.lineSeparator();
+        // Scripted "user input":
+        //  1) "4" -> choose round-trip option
+        //  2) input path
+        //  3) output path
+        //  4) "0" -> exit main menu
+        String script = String.join(System.lineSeparator(),
+                "4",
+                inputCsv.toString(),
+                outputCsv.toString(),
+                "0"
+        ) + System.lineSeparator();
+
         System.setIn(new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8)));
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            invokeDemoRoundTrip(scanner);
-        }
+        // Run the real entry point
+        Main.main(new String[0]);
 
-// Assert: output file exists and has the same number of *data* lines.
-// Because config.setHasHeader(true), CsvReader will treat the first line
-// as header metadata, so CsvWriter only round-trips the data rows.
-        assertTrue(Files.exists(outputCsv), "Output CSV should be created by demoRoundTrip");
+        // Assert: output file exists
+        assertTrue(Files.exists(outputCsv), "Output CSV should be created by round-trip option 4");
 
+        // Because config.setHasHeader(true), CsvReader treats the first line
+        // as header metadata and CsvWriter only writes the data rows.
         List<String> outLines = Files.readAllLines(outputCsv, StandardCharsets.UTF_8);
         assertEquals(
                 lines.size() - 1,
@@ -223,17 +224,17 @@ class MainTest {
         assertTrue(stdout.contains("Round-trip complete."),
                 "Console output should indicate completion");
 
-
         // Cleanup
         Files.deleteIfExists(inputCsv);
         Files.deleteIfExists(outputCsv);
         Files.deleteIfExists(tempDir);
     }
 
+
     @Test
-    void roundTrip_withBlankOutputPath_usesDefault() throws Exception {
+    void main_roundTripOption_withBlankOutputPath_usesDefault() throws Exception {
         // Create a temporary input CSV (absolute path)
-        Path inputCsv = Files.createTempFile("roundtrip-default-input", ".csv");
+        Path inputCsv = Files.createTempFile("roundtrip-main-default-input", ".csv");
         List<String> lines = List.of(
                 "id,name,age",
                 "1,Charlie,22",
@@ -241,36 +242,36 @@ class MainTest {
         );
         Files.write(inputCsv, lines, StandardCharsets.UTF_8);
 
-        // Prepare the "expected" default output path,
-        // which demoRoundTrip uses when the user presses Enter on the output prompt.
+        // demoRoundTrip uses "demo_output.csv" in the working directory when the user
+        // leaves the output prompt blank.
         Path defaultOut = Path.of("demo_output.csv");
-
-        // If a demo_output.csv already exists in the working directory,
-        // we should remove it or this test will be ambiguous.
-        // (If you really want to be ultra-safe, you can back it up first.)
-        Files.deleteIfExists(defaultOut);
+        Files.deleteIfExists(defaultOut); // avoid interference from previous runs
 
         // Scripted input:
-        //   - first line: absolute path to input CSV
-        //   - second line: blank (=> default output path)
-        String script = inputCsv.toString() + System.lineSeparator()
-                + "" + System.lineSeparator();
+        //  1) "4" -> round-trip option
+        //  2) absolute path to input CSV
+        //  3) "" (blank) -> default output path
+        //  4) "0" -> exit main menu
+        String script = String.join(System.lineSeparator(),
+                "4",
+                inputCsv.toString(),
+                "",
+                "0"
+        ) + System.lineSeparator();
 
         System.setIn(new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8)));
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            invokeDemoRoundTrip(scanner);
-        }
+        Main.main(new String[0]);
 
-        // Now demoRoundTrip should have created demo_output.csv in the current working directory
+        // Now demoRoundTrip should have created demo_output.csv in the working directory
         assertTrue(Files.exists(defaultOut),
-                "demo_output.csv should be created in the working directory when output path is left blank");
+                "demo_output.csv should be created when output path is left blank");
 
         List<String> outLines = Files.readAllLines(defaultOut, StandardCharsets.UTF_8);
         assertEquals(
                 lines.size() - 1,
                 outLines.size(),
-                "Default-output round-trip should preserve number of data lines (header not re-written)"
+                "Default-output round-trip should preserve number of data rows (header not re-written)"
         );
 
         String stdout = outContent.toString(StandardCharsets.UTF_8);
@@ -283,6 +284,7 @@ class MainTest {
         Files.deleteIfExists(inputCsv);
         Files.deleteIfExists(defaultOut);
     }
+
 
 
     /**
