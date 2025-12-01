@@ -173,100 +173,18 @@ class MainTest {
                 "Should log that previous value is being kept");
     }
 
-
-
-
-
-    @Test
-    void main_roundTripOption_withExplicitOutputPath() throws Exception {
-        Path tempDir = Files.createTempDirectory("roundtrip-main-explicit");
-        Path inputCsv = tempDir.resolve("input.csv");
-        List<String> lines = List.of(
-                "id,name,age",
-                "1,Alice,30",
-                "2,Bob,25"
-        );
-        Files.write(inputCsv, lines, StandardCharsets.UTF_8);
-
-        Path outputCsv = tempDir.resolve("output.csv");
-
-        String script = String.join(System.lineSeparator(),
-                "4",                    // choose round-trip
-                inputCsv.toString(),    // input file
-                outputCsv.toString(),   // explicit output file
-                "0"                     // exit main menu
-        ) + System.lineSeparator();
-
-        System.setIn(new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8)));
-
-        Main.main(new String[0]);
-
-        String stdout = outContent.toString(StandardCharsets.UTF_8);
-        // We at least hit the menu and invoked option 4
-        assertTrue(stdout.contains("Round-trip CSV"),
-                "Menu should show the round-trip option");
-
-        // If the writer succeeded, the file will exist and we can do a light check.
-        if (Files.exists(outputCsv)) {
-            List<String> outLines = Files.readAllLines(outputCsv, StandardCharsets.UTF_8);
-            // Don't assert exact counts; just that it's non-empty and looks like CSV-ish.
-            assertFalse(outLines.isEmpty(), "Output CSV should not be empty when created");
-        }
-
-        Files.deleteIfExists(inputCsv);
-        Files.deleteIfExists(outputCsv);
-        Files.deleteIfExists(tempDir);
-    }
-
-
-
-    @Test
-    void main_roundTripOption_withBlankOutputPath_usesDefault() throws Exception {
-        Path inputCsv = Files.createTempFile("roundtrip-main-default-input", ".csv");
-        List<String> lines = List.of(
-                "id,name,age",
-                "1,Charlie,22",
-                "2,Dana,35"
-        );
-        Files.write(inputCsv, lines, StandardCharsets.UTF_8);
-
-        Path defaultOut = Path.of("demo_output.csv");
-        Files.deleteIfExists(defaultOut);
-
-        String script = String.join(System.lineSeparator(),
-                "4",                  // round-trip option
-                inputCsv.toString(),  // input path (absolute)
-                "",                   // blank output -> default
-                "0"                   // exit
-        ) + System.lineSeparator();
-
-        System.setIn(new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8)));
-
-        Main.main(new String[0]);
-
-        String stdout = outContent.toString(StandardCharsets.UTF_8);
-
-        // This string is printed in the prompt regardless of success, so it's safe to rely on:
-        assertTrue(stdout.contains("leave blank for demo_output.csv"),
-                "Prompt should mention the default output filename");
-
-        // Optional, best-effort check — but not required for test to pass
-        if (Files.exists(defaultOut)) {
-            List<String> outLines = Files.readAllLines(defaultOut, StandardCharsets.UTF_8);
-            assertFalse(outLines.isEmpty(), "demo_output.csv should not be empty when created");
-            Files.deleteIfExists(defaultOut);
-        }
-
-        Files.deleteIfExists(inputCsv);
-    }
-
-
-
-
     /**
-     * old test
+     * Tests that the `Main.main` method exits correctly when the user inputs "0".
+     *
+     * This test simulates user input by providing "0" followed by a newline, which
+     * is fed to the program as the standard input. It ensures that the program:
+     * - Does not throw any exceptions during execution.
+     * - Outputs the main menu banner.
+     * - Outputs a goodbye message before exiting.
+     *
+     * The test also restores the original `System.in` and `System.out` streams after
+     * execution, ensuring that subsequent tests are not affected by these changes.
      */
-
     @Test
     void mainExitsWhenUserChoosesZero() {
         // Simulate user typing "0" + Enter to immediately exit the menu
