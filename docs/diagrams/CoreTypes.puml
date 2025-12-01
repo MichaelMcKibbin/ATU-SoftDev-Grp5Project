@@ -1,9 +1,4 @@
 
----
-
-## 3️⃣ PlantUML Class Diagram (Core Types)
-
-
 @startuml
 skinparam classAttributeIconSize 0
 
