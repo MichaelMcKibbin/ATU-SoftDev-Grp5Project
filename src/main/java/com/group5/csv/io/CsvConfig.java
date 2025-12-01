@@ -171,7 +171,7 @@ public final class CsvConfig {
         private boolean requireUniformFieldCount = false;
         private boolean skipEmptyLines = true;
         private Charset charset = StandardCharsets.UTF_8;
-        private boolean writeBOM = true;
+        private boolean writeBOM = false;
         private int readBufSize = 8192;
 
         /**
