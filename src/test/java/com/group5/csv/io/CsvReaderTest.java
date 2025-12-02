@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -704,6 +705,7 @@ class CsvReaderTest {
         }
     }
 
+    // ----- fromPath convenience method Tests -----
     @Nested
     class CsvReaderFromPathTest {
 
@@ -826,6 +828,52 @@ class CsvReaderTest {
                 assertTrue(config.isWriteBOM());
                 assertEquals(8192, config.getReadBufSize());
             }
+        }
+    }
+
+    // ----- Spliterator Tests -----
+    @Nested
+    class CsvReaderSpliteratorTest {
+
+        @Test
+        void spliterator_hasExpectedCharacteristics() throws Exception {
+            String csv = """
+                    name,age
+                    John,25
+                    Anna,30
+                    """;
+
+            CsvConfig config = CsvConfig.builder().build();
+
+            try (CsvReader reader = new CsvReader(new VirtualReader(csv), config)) {
+                Spliterator<Row> spliterator = reader.spliterator();
+
+                assertTrue(spliterator.hasCharacteristics(Spliterator.ORDERED));
+                assertTrue(spliterator.hasCharacteristics(Spliterator.NONNULL));
+            }
+        }
+
+        @Test
+        void spliterator_integratesWithStreamSupport() throws Exception {
+            String csv = """
+                    name,age,city
+                    John,25,Dublin
+                    Anna,30,NY
+                    """;
+
+            CsvConfig config = CsvConfig.builder().setHasHeader(true).build();
+
+            List<List<String>> values;
+
+            try (CsvReader reader = new CsvReader(new VirtualReader(csv), config)) {
+                values = StreamSupport.stream(reader.spliterator(), false)
+                        .map(Row::getValues)
+                        .toList();
+            }
+
+            assertEquals(2, values.size());
+            assertEquals(List.of("John", "25", "Dublin"), values.get(0));
+            assertEquals(List.of("Anna", "30", "NY"), values.get(1));
         }
     }
 
