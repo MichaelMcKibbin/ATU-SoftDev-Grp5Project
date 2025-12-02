@@ -414,6 +414,20 @@ public class CsvReader implements Closeable, Iterable<Row> {
     }
 
     /**
+     * Returns an ORDERED, NONNULL Spliterator over the rows of this reader.
+     *
+     * @return a spliterator of {@link Row} objects
+     */
+
+    @Override
+    public Spliterator<Row> spliterator() {
+        return Spliterators.spliteratorUnknownSize(
+                iterator(),
+                Spliterator.ORDERED | Spliterator.NONNULL
+        );
+    }
+
+    /**
      * Closes the underlying input reader.
      *
      * @throws IOException if an I/O error occurs while closing the reader
