@@ -19,13 +19,14 @@ class HeadersTest {
         Headers headers = new Headers(columns);
         assertEquals(3, headers.size());
     }
-    
+
     @Test
     void shouldThrowExceptionForNullList() {
         assertThrows(IllegalArgumentException.class, () -> {
-            new Headers(null);
+            new Headers((List<String>) null);
         });
     }
+
     
 //    @Test
 //    void shouldThrowExceptionForEmptyList() {

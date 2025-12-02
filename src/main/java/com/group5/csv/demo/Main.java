@@ -27,6 +27,9 @@ import java.util.*;
  */
 public class Main {
 
+    private static Headers lastHeaders;
+    private static List<Row> lastRows;
+
     /**
      * Application entry point. Displays the main menu and dispatches user
      * choices to the appropriate demo methods until the user chooses to exit.
@@ -53,7 +56,7 @@ public class Main {
             switch (choice) {
                 case "1" -> demoReadMenu(sc);
                 case "2" -> demoWrite();
-                case "3" -> System.out.println("Schema validation not yet implemented.");
+                case "3" -> demoValidateCsv();
                 case "4" -> demoRoundTripComma(sc);
                 case "5" -> demoRoundTripSemicolon(sc);
                 case "6" -> demoRoundTripTab(sc);
@@ -67,24 +70,6 @@ public class Main {
         }
     }
 
-//    /** Placeholder: previews the file without using CsvReader (keeps demo usable). */
-//    private static void demoRead(Scanner sc) {
-//        System.out.print("Enter CSV file path: ");
-//        String path = sc.nextLine().trim();
-//        Path p = Paths.get(path);
-//        if (!Files.exists(p)) {
-//            System.out.println("File not found. (CsvReader not fully implemented yet.)");
-//            return;
-//        }
-//        try {
-//            List<String> lines = Files.readAllLines(p); // placeholder
-//            System.out.printf("Read %d line(s). Showing up to 5:%n", lines.size());
-//            lines.stream().limit(5).forEach(System.out::println);
-//            System.out.println("\nNote: This is a placeholder preview. Full CsvReader integration pending.");
-//        } catch (IOException e) {
-//            System.out.println("Could not read file (placeholder mode): " + e.getMessage());
-//        }
-//    }
 
     /**
      * Placeholder demonstration that writes a minimal CSV file using NIO only.
@@ -114,20 +99,49 @@ public class Main {
      * @param headers  optional custom headers (overrides file header)
      * @param maxLines  output lines limit, or unlimited if maxLines < 0
      */
+//    private static void demoRead(String filePath, CsvConfig config, Headers headers, long maxLines) {
+//        Path path = Path.of(filePath);
+//
+//        try (CsvReader reader = CsvReader.fromPath(path, config, headers)) {
+//            List<Row> rows = reader.readAll();
+//            System.out.printf("Read %d rows.%n", rows.size());
+//            if (maxLines < 0)
+//                rows.forEach(System.out::println);
+//            else
+//                rows.stream().limit(maxLines).forEach(System.out::println);
+//        } catch (Exception e) {
+//            System.out.println("Error reading CSV: " + e.getMessage());
+//        }
+//    }
     private static void demoRead(String filePath, CsvConfig config, Headers headers, long maxLines) {
         Path path = Path.of(filePath);
 
         try (CsvReader reader = CsvReader.fromPath(path, config, headers)) {
             List<Row> rows = reader.readAll();
+
+            // Remember the last CSV for validation
+            lastRows = rows;
+
+            // Try to use headers from the reader (file header or override)
+            Headers effectiveHeaders = reader.getHeaders();
+
+            // If there are no headers (e.g. hasHeader = false), synthesize some
+            if (effectiveHeaders == null && !rows.isEmpty()) {
+                effectiveHeaders = new Headers(rows.get(0).size());
+            }
+            lastHeaders = effectiveHeaders;
+
             System.out.printf("Read %d rows.%n", rows.size());
             if (maxLines < 0)
                 rows.forEach(System.out::println);
             else
                 rows.stream().limit(maxLines).forEach(System.out::println);
+
         } catch (Exception e) {
             System.out.println("Error reading CSV: " + e.getMessage());
         }
     }
+
 
     /**
      * Interactive menu for configuring and testing {@link CsvReader}.
@@ -146,7 +160,7 @@ public class Main {
      * @param sc scanner for user input
      */
     private static void demoReadMenu(Scanner sc) {
-        String path = "demo_input.csv";
+        String path = "src/main/resources/demo/demo_input.csv";
         CsvConfig config = CsvConfig.builder().build();
         Headers headers = null;
         CsvDialect dialect = CsvDialect.RFC4180;
@@ -531,6 +545,25 @@ public class Main {
 
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void demoValidateCsv() {
+        if (lastRows == null || lastHeaders == null) {
+            System.out.println("No CSV loaded. Please read a CSV first.");
+            return;
+        }
+
+        boolean successes = true;
+        for (Row row : lastRows) {
+            if (row.size() != lastHeaders.size()) {
+                System.out.println("Row length mismatch: " + row);
+                successes = false;
+            }
+        }
+
+        if (successes) {
+            System.out.println("CSV appears structurally valid.");
         }
     }
 
