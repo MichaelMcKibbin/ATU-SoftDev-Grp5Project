@@ -55,6 +55,21 @@ public class Headers {
     }
 
     /**
+     * Convenience constructor to create headers from a fixed list of names.
+     * <p>
+     * Example:
+     *   Headers h = new Headers("id", "name", "age");
+     * </p>
+     *
+     * This delegates to the main List-based constructor, so all existing
+     * validation rules (null/empty/duplicate checks) still apply.
+     */
+    public Headers(String... columnNames) {
+        this(Arrays.asList(columnNames));
+    }
+
+
+    /**
      * Creates a {@code Headers} instance with a fixed number of generated column names.
      * <p>
      * The column names follow the pattern {@code col0}, {@code col1}, ..., {@code colN},
