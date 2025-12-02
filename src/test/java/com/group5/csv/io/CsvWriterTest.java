@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -33,6 +34,9 @@ import java.util.Map;
  */
 
 class CsvWriterTest {
+
+    @TempDir
+    Path tempDir;
 
     // --- helper to parse all rows from a string using CsvParser ---
     private List<List<String>> parseAll(String csv, CsvFormat format) throws IOException {
@@ -321,7 +325,7 @@ class CsvWriterTest {
      */
     @Test
     void toPath_writesFileUsingConfigCharset() throws IOException {
-        Path temp = Files.createTempFile("csvwriter-", ".csv");
+        Path temp = tempDir.resolve("csvwriter-.csv");
 
         CsvConfig config = CsvConfig.builder()
                 .setFormat(CsvFormat.rfc4180())
