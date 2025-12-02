@@ -126,4 +126,21 @@ public class Row {
     public Headers getHeaders() {
         return headers;
     }
+    
+    /**
+     * Returns a string representation of this row in a readable format.
+     * 
+     * @return a string showing the row values with their column headers
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Row{");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(headers.getName(i)).append("=").append(values.get(i));
+        }
+        sb.append("}");
+        return sb.toString();
+    }
 }

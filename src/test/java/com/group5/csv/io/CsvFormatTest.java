@@ -25,7 +25,7 @@ class CsvFormatTest {
         assertFalse(format.allowUnescapedQuotes);
         assertFalse(format.allowUnbalancedQuotes);
         assertFalse(format.trimUnquotedFields);
-        assertFalse(format.skipWhitespaceBeforeQuotedField);
+        assertFalse(format.skipWhitespaceAroundQuotes);
     }
 
     @Test
@@ -44,6 +44,13 @@ class CsvFormatTest {
         assertEquals(',', format.delimiter);
         assertEquals('"', format.quoteChar);
         assertEquals("\r\n", format.newline);
+        assertFalse(format.alwaysQuote);
+        assertEquals(CsvFormat.NO_ESCAPE, format.escapeChar);
+        assertTrue(format.doubleQuoteEnabled);
+        assertFalse(format.allowUnescapedQuotes);
+        assertFalse(format.allowUnbalancedQuotes);
+        assertFalse(format.trimUnquotedFields);
+        assertFalse(format.skipWhitespaceAroundQuotes);
     }
 
     @Test
@@ -53,17 +60,29 @@ class CsvFormatTest {
         assertEquals(',', format.delimiter);
         assertEquals('"', format.quoteChar);
         assertEquals("\r\n", format.newline);
-        assertTrue(format.skipWhitespaceBeforeQuotedField);
+        assertFalse(format.alwaysQuote);
+        assertEquals(CsvFormat.NO_ESCAPE, format.escapeChar);
+        assertTrue(format.doubleQuoteEnabled);
+        assertTrue(format.allowUnescapedQuotes);
+        assertFalse(format.allowUnbalancedQuotes);
+        assertFalse(format.trimUnquotedFields);
+        assertTrue(format.skipWhitespaceAroundQuotes);
     }
 
     @Test
     void testExcelSemicolonFormat() {
         CsvFormat format = CsvFormat.excel_semicolon();
-        
+
         assertEquals(';', format.delimiter);
         assertEquals('"', format.quoteChar);
         assertEquals("\r\n", format.newline);
-        assertTrue(format.skipWhitespaceBeforeQuotedField);
+        assertFalse(format.alwaysQuote);
+        assertEquals(CsvFormat.NO_ESCAPE, format.escapeChar);
+        assertTrue(format.doubleQuoteEnabled);
+        assertTrue(format.allowUnescapedQuotes);
+        assertFalse(format.allowUnbalancedQuotes);
+        assertFalse(format.trimUnquotedFields);
+        assertTrue(format.skipWhitespaceAroundQuotes);
     }
 
     @Test
@@ -72,9 +91,14 @@ class CsvFormatTest {
         
         assertEquals(',', format.delimiter);
         assertEquals('"', format.quoteChar);
+        assertEquals("\n", format.newline);
+        assertFalse(format.alwaysQuote);
         assertEquals('\\', format.escapeChar);
+        assertTrue(format.doubleQuoteEnabled);
         assertTrue(format.allowUnescapedQuotes);
         assertTrue(format.allowUnbalancedQuotes);
+        assertTrue(format.trimUnquotedFields);
+        assertTrue(format.skipWhitespaceAroundQuotes);
     }
 
     @Test
@@ -83,7 +107,14 @@ class CsvFormatTest {
         
         assertEquals('\t', format.delimiter);
         assertEquals(CsvFormat.NO_QUOTE, format.quoteChar);
+        assertEquals("\n", format.newline);
+        assertFalse(format.alwaysQuote);
         assertEquals(CsvFormat.NO_ESCAPE, format.escapeChar);
+        assertFalse(format.doubleQuoteEnabled);
+        assertTrue(format.allowUnescapedQuotes);
+        assertTrue(format.allowUnbalancedQuotes);
+        assertFalse(format.trimUnquotedFields);
+        assertFalse(format.skipWhitespaceAroundQuotes);
     }
 
     // ========== Builder Pattern Tests ==========
@@ -182,10 +213,10 @@ class CsvFormatTest {
     @Test
     void testBuilderWithSkipWhitespace() {
         CsvFormat format = CsvFormat.builder()
-                .skipWhitespaceBeforeQuotedField(true)
+                .skipWhitespaceAroundQuotes(true)
                 .build();
         
-        assertTrue(format.skipWhitespaceBeforeQuotedField);
+        assertTrue(format.skipWhitespaceAroundQuotes);
     }
 
     @Test
@@ -393,4 +424,106 @@ class CsvFormatTest {
         
         assertTrue(str.contains("\\r\\n"));
     }
+
+    @Test
+    void testEqualsSameReference() {
+        CsvFormat f = CsvFormat.excel();
+        assertEquals(f, f); // covers "this == o" true branch
+    }
+
+    @Test
+    void testEqualsNull() {
+        CsvFormat f = CsvFormat.excel();
+        assertNotEquals(f, null); // covers instanceof false branch
+    }
+
+    @Test
+    void testEqualsDifferentType() {
+        CsvFormat f = CsvFormat.excel();
+        assertNotEquals(f, "string"); // covers instanceof false branch
+    }
+
+    @Test
+    void testEqualsDifferentFields() {
+        CsvFormat base = CsvFormat.excel();
+
+        assertNotEquals(base, base.withDelimiter(';'));
+        assertNotEquals(base, base.withQuoteChar('\''));
+        assertNotEquals(base, base.withNewline("\n"));
+        assertNotEquals(base, base.withAlwaysQuote(!base.alwaysQuote));
+
+        CsvFormat f;
+
+        f = CsvFormat.builder()
+                .delimiter(base.delimiter)
+                .quoteChar(base.quoteChar)
+                .newline(base.newline)
+                .alwaysQuote(base.alwaysQuote)
+                .escapeChar((char)(base.escapeChar + 1))
+                .doubleQuoteEnabled(base.doubleQuoteEnabled)
+                .allowUnescapedQuotes(base.allowUnescapedQuotes)
+                .allowUnbalancedQuotes(base.allowUnbalancedQuotes)
+                .trimUnquotedFields(base.trimUnquotedFields)
+                .skipWhitespaceAroundQuotes(base.skipWhitespaceAroundQuotes)
+                .build();
+        assertNotEquals(base, f);
+
+        f = CsvFormat.builder()
+                .delimiter(base.delimiter)
+                .quoteChar(base.quoteChar)
+                .newline(base.newline)
+                .alwaysQuote(base.alwaysQuote)
+                .escapeChar(base.escapeChar)
+                .doubleQuoteEnabled(! base.doubleQuoteEnabled)
+                .allowUnescapedQuotes(base.allowUnescapedQuotes)
+                .allowUnbalancedQuotes(base.allowUnbalancedQuotes)
+                .trimUnquotedFields(base.trimUnquotedFields)
+                .skipWhitespaceAroundQuotes(base.skipWhitespaceAroundQuotes)
+                .build();
+        assertNotEquals(base, f);
+
+        f = CsvFormat.builder()
+                .delimiter(base.delimiter)
+                .quoteChar(base.quoteChar)
+                .newline(base.newline)
+                .alwaysQuote(base.alwaysQuote)
+                .escapeChar(base.escapeChar)
+                .doubleQuoteEnabled(base.doubleQuoteEnabled)
+                .allowUnescapedQuotes(base.allowUnescapedQuotes)
+                .allowUnbalancedQuotes(base.allowUnbalancedQuotes)
+                .trimUnquotedFields(base.trimUnquotedFields)
+                .skipWhitespaceAroundQuotes(! base.skipWhitespaceAroundQuotes)
+                .build();
+        assertNotEquals(base, f);
+    }
+
+    @Test
+    void testHashCodeConsistency() {
+        CsvFormat f1 = CsvFormat.excel();
+        CsvFormat f2 = CsvFormat.excel();
+
+        assertEquals(f1.hashCode(), f2.hashCode()); // equal objects must have same hashCode
+    }
+
+    @Test
+    void testHashCodeUniqueness() {
+        CsvFormat f1 = CsvFormat.rfc4180();
+        CsvFormat f2 = CsvFormat.excel();
+
+        assertNotEquals(f1.hashCode(), f2.hashCode());
+    }
+
+    @Test
+    void testPresets() {
+        CsvFormat excel = CsvFormat.excel();
+        CsvFormat semicolon = CsvFormat.excel_semicolon();
+        CsvFormat json = CsvFormat.json_csv();
+        CsvFormat tsv = CsvFormat.tsv();
+
+        assertNotEquals(excel, semicolon);
+        assertNotEquals(excel, json);
+        assertNotEquals(excel, tsv);
+        assertNotEquals(json, tsv);
+    }
+
 }

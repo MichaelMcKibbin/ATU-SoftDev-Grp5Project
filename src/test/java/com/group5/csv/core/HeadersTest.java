@@ -27,12 +27,12 @@ class HeadersTest {
         });
     }
     
-    @Test
-    void shouldThrowExceptionForEmptyList() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Headers(new ArrayList<>());
-        });
-    }
+//    @Test
+//    void shouldThrowExceptionForEmptyList() {
+//        assertThrows(IllegalArgumentException.class, () -> {
+//            new Headers(new ArrayList<>());
+//        });
+//    }
     
     @Test
     void shouldThrowExceptionForNullColumnName() {
@@ -45,6 +45,38 @@ class HeadersTest {
     @Test
     void shouldThrowExceptionForDuplicateColumns() {
         List<String> columns = Arrays.asList("id", "name", "id");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    @Test
+    void shouldThrowExceptionForEmptyStringColumnName() {
+        List<String> columns = Arrays.asList("id", "", "name");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    @Test
+    void shouldThrowExceptionForWhitespaceOnlyColumnName() {
+        List<String> columns = Arrays.asList("id", "   ", "name");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    @Test
+    void shouldThrowExceptionForTabOnlyColumnName() {
+        List<String> columns = Arrays.asList("id", "\t\t", "name");
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Headers(columns);
+        });
+    }
+    
+    @Test
+    void shouldThrowExceptionForMixedWhitespaceOnlyColumnName() {
+        List<String> columns = Arrays.asList("id", " \t \n ", "name");
         assertThrows(IllegalArgumentException.class, () -> {
             new Headers(columns);
         });
@@ -234,6 +266,30 @@ class HeadersTest {
         assertThrows(UnsupportedOperationException.class, () -> {
             columns.add("email");
         });
+    }
+
+    @Test
+    void testToStringMultipleColumns() {
+        Headers headers = new Headers(List.of("id", "name", "city"));
+
+        String expected = "Row{1=id, 2=name, 3=city}";
+        assertEquals(expected, headers.toString());
+    }
+
+    @Test
+    void testToStringSingleColumn() {
+        Headers headers = new Headers(List.of("name"));
+
+        String expected = "Row{1=name}";
+        assertEquals(expected, headers.toString());
+    }
+
+    @Test
+    void testToStringEmptyHeaders() {
+        Headers headers = new Headers(List.of());
+
+        String expected = "Row{}";
+        assertEquals(expected, headers.toString());
     }
     
     // Integration Test

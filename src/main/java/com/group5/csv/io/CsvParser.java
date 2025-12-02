@@ -11,17 +11,16 @@ import java.util.List;
 /**
  * Low-level CSV parser that reads characters from a Reader and
  * returns one logical record at a time as a list of fields.
- *
- * This is a state machine that honours:
+ * <p>This is a state machine that honours:
  *  - delimiter and quoteChar from CsvFormat
  *  - CRLF vs LF newlines (CRLF normalised to a single end-of-row)
- *
- * It does NOT handle higher-level concerns like headers or schemas.
+ * <p>It does NOT handle higher-level concerns like headers or schemas.
  */
 public final class CsvParser {
 
     private final CsvFormat format;
     private final PushbackReader in;
+    private int position = 0;
 
     // Internal FSM states
     private enum State {
@@ -32,6 +31,14 @@ public final class CsvParser {
         AFTER_QUOTE
     }
 
+    /**
+     * Creates a new parser that reads characters from the given reader using
+     * the supplied CSV dialect.
+     *
+     * @param format the CSV dialect to use (must not be null)
+     * @param reader the character source to read from (must not be null)
+     * @throws IllegalArgumentException if either argument is null
+     */
     public CsvParser(CsvFormat format, Reader reader) {
         if (format == null) throw new IllegalArgumentException("format must not be null");
         if (reader == null) throw new IllegalArgumentException("reader must not be null");
@@ -40,21 +47,57 @@ public final class CsvParser {
     }
 
     /**
-     * Reads the next logical row from the input.
+     * Returns the CSV format (dialect) used by this parser.
      *
-     * @return list of cell values, or null if EOF is reached before any data
+     * @return the {@link CsvFormat} instance passed to the constructor
+     */
+    public CsvFormat getFormat() { return format; }
+
+    /**
+     * Reads the next char from the input, increments position
+     * @return next char form in stream
+     */
+    private int read() throws IOException {
+        ++position;
+        return in.read();
+    }
+
+    /**
+     * Uneads the given char back to the input, decrements position
+     */
+    private void unread(int ch) throws IOException {
+        in.unread(ch);
+        --position;
+    }
+
+    /**
+     * Throws ParseException with position details.
+     *
+     */
+    private void throwParseException(String msg) throws ParseException {
+        throw new ParseException(msg, -1, position);
+    }
+
+    /**
+     * Reads the next logical CSV row.
+     * <p>A row ends at a delimiter or newline. Quoted fields may span multiple lines.
+     * CRLF pairs are normalised to a single newline.
+     *
+     * @return a list of parsed field values, or {@code null} if EOF occurs
+     *         before any data is read
      * @throws IOException if the underlying reader fails
-     * @throws ParseException (runtime) if CSV syntax is invalid
+     * @throws ParseException if the input violates CSV syntax rules
      */
     public List<String> readRow() throws IOException {
         List<String> row = new ArrayList<>();
         StringBuilder cell = new StringBuilder();
 
         State state = State.START_ROW;
+        position = 0;
         int chInt;
 
         while (true) {
-            chInt = in.read();
+            chInt = read();
             char ch = (char) chInt;
 
             if (chInt == -1) { // EOF
@@ -63,8 +106,8 @@ public final class CsvParser {
                         // EOF before any data
                         return row.isEmpty() ? null : row;
                     }
-                    case INSIDE_QUOTED, AFTER_QUOTE ->
-                            throw new ParseException("Unexpected end of file inside quoted field");
+                    case INSIDE_QUOTED/*, AFTER_QUOTE*/ ->
+                            throwParseException("Unexpected end of file inside quoted field");
                     default -> {
                         // push last cell if there is one
                         row.add(cell.toString());
@@ -75,29 +118,44 @@ public final class CsvParser {
 
             // normalise CRLF => treat \r\n as single newline
             if (ch == '\r') {
-                int next = in.read();
+                int next = read();
                 if (next != '\n' && next != -1) {
-                    in.unread(next);
+                    unread(next);
                 }
                 ch = '\n';
             }
 
             switch (state) {
                 case START_ROW -> {
-                    // first character of a new row
+                    // empty line -> return empty list of fields
                     if (ch == '\n') {
-                        // empty line -> return single empty cell
-                        row.add("");
                         return row;
-                    } else if (ch == format.quoteChar) {
-                        state = State.INSIDE_QUOTED;
-                    } else if (ch == format.delimiter) {
-                        row.add("");
-                        state = State.START_CELL;
                     } else {
-                        cell.append(ch);
-                        state = State.INSIDE_UNQUOTED;
+                        unread(ch);
+                        state = State.START_CELL;
                     }
+//                    // first character of a new row
+//                    if (ch == '\n') {
+//                        // empty line -> return single empty cell
+//                        row.add("");
+//                        return row;
+//                    } else if (ch == format.quoteChar) {
+//                        state = State.INSIDE_QUOTED;
+//                        if (format.skipWhitespaceAroundQuotes) {
+//                            cell.setLength(0); // skip tabs and spaces in excel-like syntax
+//                        }
+//                    } else if (ch == format.delimiter) {
+//                        row.add("");
+//                        state = State.START_CELL;
+//                    } else if ((ch == ' ' || ch == '\t') && format.skipWhitespaceAroundQuotes) {
+//                        cell.append(ch);
+//                        // collect tabs and spaces in excel-like syntax
+//                        // in order to skip them if field is quoted (when quote symbol encountered)
+//                        // or retain otherwise
+//                    } else {
+//                        cell.append(ch);
+//                        state = State.INSIDE_UNQUOTED;
+//                    }
                 }
 
                 case START_CELL -> {
@@ -106,9 +164,17 @@ public final class CsvParser {
                         return row;
                     } else if (ch == format.quoteChar) {
                         state = State.INSIDE_QUOTED;
+                        if (format.skipWhitespaceAroundQuotes) {
+                            cell.setLength(0); // skip tabs and spaces in excel-like syntax
+                        }
                     } else if (ch == format.delimiter) {
                         row.add("");
                         // stay in START_CELL for next empty cell
+                    } else if ((ch == ' ' || ch == '\t') && format.skipWhitespaceAroundQuotes) {
+                        cell.append(ch);
+                        // collect tabs and spaces in excel-like syntax
+                        // in order to skip them if field is quoted (when quote symbol encountered)
+                        // or retain otherwise
                     } else {
                         cell.append(ch);
                         state = State.INSIDE_UNQUOTED;
@@ -118,13 +184,13 @@ public final class CsvParser {
                 case INSIDE_QUOTED -> {
                     if (ch == format.quoteChar) {
                         // Possible end of quoted field or escaped quote
-                        int next = in.read();
+                        int next = read();
                         if (next == format.quoteChar && format.doubleQuoteEnabled) {
                             // Escaped quote ("")
                             cell.append(format.quoteChar);
                         } else {
                             if (next != -1) {
-                                in.unread(next);
+                                unread(next);
                             }
                             state = State.AFTER_QUOTE;
                         }
@@ -141,20 +207,22 @@ public final class CsvParser {
                     } else if (ch == '\n') {
                         row.add(cell.toString());
                         return row;
-                    } else if (Character.isWhitespace(ch) && format.skipWhitespaceBeforeQuotedField) {
-                        // Excel-style: ignore trailing spaces after closing quote
+                    } else if (format.skipWhitespaceAroundQuotes && (ch == '\t' || ch == ' ')) {
+                        // Excel-style: ignore trailing spaces and tabs after closing quote
                         // and before delimiter or newline
                         // Just stay in AFTER_QUOTE
                     } else {
                         // non-whitespace garbage after closing quote
-                        if (!format.allowUnescapedQuotes) {
-                            throw new ParseException("Unexpected character '" + ch +
-                                    "' after closing quote");
-                        } else {
-                            // lenient mode: treat as normal char
-                            cell.append(ch);
-                            state = State.INSIDE_UNQUOTED;
-                        }
+                        throwParseException("Unexpected character '" + ch +
+                                "' after closing quote");
+//                        if (!format.allowUnescapedQuotes) {
+//                            throwParseException("Unexpected character '" + ch +
+//                                    "' after closing quote");
+//                        } else {
+//                            // lenient mode: treat as normal char
+//                            cell.append(ch);
+//                            state = State.INSIDE_UNQUOTED;
+//                        }
                     }
                 }
 
@@ -171,7 +239,7 @@ public final class CsvParser {
                         row.add(value);
                         return row;
                     } else if (ch == format.quoteChar && !format.allowUnescapedQuotes) {
-                        throw new ParseException("Unexpected quote in unquoted field");
+                        throwParseException("Unexpected quote in unquoted field");
                     } else {
                         cell.append(ch);
                     }
