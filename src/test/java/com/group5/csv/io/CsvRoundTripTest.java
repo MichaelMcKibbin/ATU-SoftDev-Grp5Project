@@ -1,6 +1,5 @@
 package com.group5.csv.io;
 
-import com.group5.csv.core.Headers;
 import com.group5.csv.core.Row;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Round-trip tests for CsvReader and CsvWriter.
- *
+ * <p>
  * Ensures that data can be:
  * CSV -> Reader -> Writer -> Reader
  * without loss or corruption.
@@ -55,6 +54,68 @@ public class CsvRoundTripTest {
                 .build();
 
         runRoundTripTest(data, config);
+    }
+
+    /**
+     * Verifies that escaped quotes inside quoted fields are preserved correctly.
+     */
+    @Test
+    public void testEscapedQuotes() throws Exception {
+        List<String> data = List.of(
+                "text",
+                "\"He said \"\"Hello\"\" to her\"",
+                "\"\"\"Start and end quotes\"\"\""
+        );
+
+        runRoundTripTest(data);
+    }
+
+    /**
+     * Verifies that quoted fields spanning multiple lines are handled correctly.
+     */
+    @Test
+    public void testMultilineField() throws Exception {
+        List<String> data = List.of(
+                "id,comment",
+                "1,\"Hello",
+                "world\"",
+                "2,Single line"
+        );
+
+        CsvConfig config = CsvConfig.builder()
+                .setHasHeader(true)
+                .build();
+
+        runRoundTripTest(data, config, 2);
+    }
+
+    /**
+     * Verifies that leading and trailing whitespace is preserved.
+     */
+    @Test
+    public void testWhitespacePreservation() throws Exception {
+        List<String> data = List.of(
+                "value",
+                "  leading",
+                "trailing  ",
+                "  both  "
+        );
+
+        runRoundTripTest(data);
+    }
+
+    /**
+     * Verifies correct handling of empty and missing columns.
+     */
+    @Test
+    public void testEmptyColumns() throws Exception {
+        List<String> data = List.of(
+                "a,b,c,d",
+                "1,,3,",
+                ",2,,4"
+        );
+
+        runRoundTripTest(data);
     }
 
     /**
@@ -121,13 +182,24 @@ public class CsvRoundTripTest {
     }
 
     /**
+     * Runs a round-trip test using strict line count.
+     *
+     * @param data Raw CSV lines to test
+     */
+    private void runRoundTripTest(List<String> data, CsvConfig config) throws Exception {
+        int expected = config.hasHeader() ? data.size() - 1 : data.size();
+        runRoundTripTest(data, config, expected);
+    }
+
+
+    /**
      * Runs a complete CSV round-trip:
      * input file -> CsvReader -> CsvWriter -> CsvReader -> compare results
      *
      * @param data   Raw CSV lines to test
      * @param config Custom CSV configuration
      */
-    private void runRoundTripTest(List<String> data, CsvConfig config) throws Exception {
+    private void runRoundTripTest(List<String> data, CsvConfig config, int expectedRowCount) throws Exception {
         File input = File.createTempFile("input", ".csv");
         File output = File.createTempFile("output", ".csv");
 
@@ -137,9 +209,8 @@ public class CsvRoundTripTest {
         writeRows(output, originalRows, config);
         List<Row> finalRows = readRows(output, config);
 
-        assertEquals(config.hasHeader() ? data.size() - 1 : data.size(), originalRows.size(),
+        assertEquals(expectedRowCount, originalRows.size(),
                 "Row count mismatch after first read");
-
         assertEquals(originalRows.size(), finalRows.size(),
                 "Row count mismatch after round trip");
 
@@ -192,63 +263,3 @@ public class CsvRoundTripTest {
         }
     }
 }
-
-//public class CsvRoundTripTest {
-//
-//    @Test
-//    public void testCsvReaderWriterRoundTrip() throws Exception {
-//
-//        // 1. Create a temp input CSV file
-//        File input = File.createTempFile("input", ".csv");
-//        File output = File.createTempFile("output", ".csv");
-//
-//        List<String> original = List.of(
-//                "name,age,city",
-//                "John,25,Dublin",
-//                "Anna,30,\"New York\"",
-//                "\"Smith, Bob\",40,Paris"
-//        );
-//
-//        Files.write(input.toPath(), original);
-//
-//        // 2. Default config
-//        CsvConfig config = CsvConfig.builder().build();
-//
-//        // 3. Read using CsvReader
-//        List<Row> originalRows = new ArrayList<>();
-//        try (CsvReader reader = CsvReader.fromPath(input.toPath(), config)) {
-//            Row row;
-//            while ((row = reader.readRow()) != null) {
-//                originalRows.add(row);
-//            }
-//        }
-//
-//        // 4. Write using CsvWriter
-//        try (CsvWriter writer = CsvWriter.toPath(output.toPath(), config)) {
-//            for (Row r : originalRows) {
-//                writer.writeRow(r.getValues());
-//            }
-//        }
-//
-//        // 5. Read output file again
-//        List<Row> finalRows = new ArrayList<>();
-//        try (CsvReader reader = CsvReader.fromPath(input.toPath(), config)) {
-//            Row row;
-//            while ((row = reader.readRow()) != null) {
-//                finalRows.add(row);
-//            }
-//        }
-//
-//        // 6. Compare
-//        assertEquals(original.size(), originalRows.size(), "First Reader returned incorrect row count");
-//        assertEquals(originalRows.size(), finalRows.size(), "Row count mismatch");
-//
-//        for (int i = 0; i < originalRows.size(); i++) {
-//            assertEquals(
-//                    originalRows.get(i).getValues(),
-//                    finalRows.get(i).getValues(),
-//                    "Mismatch at row " + i
-//            );
-//        }
-//    }
-//}
