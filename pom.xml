@@ -44,6 +44,7 @@
                             <goal>report</goal>
                         </goals>
                         <configuration>
+                            <!-- Exclude demo entry point from coverage checks -->
                             <excludes>
                                 <exclude>com/group5/csv/demo/Main.class</exclude>
                             </excludes>
@@ -66,7 +67,7 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <!-- adjust minimum coverage here -->
+                                            <!-- adjust minimum coverage here (Required 80%)-->
                                             <minimum>0.80</minimum>
                                         </limit>
                                     </limits>
@@ -81,6 +82,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
+                    <!-- Compile using Java 21 (required by project) -->
                     <release>21</release>
                 </configuration>
             </plugin>
