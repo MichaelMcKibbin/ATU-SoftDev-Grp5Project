@@ -1,0 +1,95 @@
+@startuml
+package "core" {
+
+class Headers {
+- List<String> columnNames
+- Map<String, Integer> nameToIndex
+--
++ Headers(List<String>)
++ Headers(String...)
++ Headers(int)
++ int getIndex(String)
++ String getName(int)
++ boolean contains(String)
++ int size()
++ List<String> getColumnNames()
++ String toString()
+}
+
+class Row {
+- Headers headers
+- List<String> values
+--
++ Row(Headers, List<String>)
++ String get(String)
++ String get(int)
++ int size()
++ boolean isEmpty()
++ List<String> getValues()
++ Headers getHeaders()
++ String toString()
+}
+
+class RowBuilder <<final>> {
+- Headers headers
+- List<String> values
+--
++ RowBuilder(Headers)
++ static RowBuilder forHeaders(Headers)
++ Headers getHeaders()
++ RowBuilder add(String)
++ RowBuilder addAll(List<String>)
++ RowBuilder set(int, String)
++ RowBuilder set(String, String)
++ int size()
++ boolean isComplete()
++ List<String> getValues()
++ void clear()
++ Row build()
+}
+
+interface Field {
++ int index()
++ String name()
++ String raw()
++ FieldType type()
++ boolean isMissing()
++ boolean isValid()
++ List<ValidationError> errors()
++ Object value()
++ <T> T valueAs(Class<T>)
++ DecimalSpec decimalSpec()
++ DateSpec dateSpec()
++ DateTimeSpec dateTimeSpec()
+}
+
+enum FieldType {
+STRING
+INT
+LONG
+DOUBLE
+DECIMAL
+BOOLEAN
+DATE
+DATETIME
+--
++ Object parse(String, Field)
++ String format(Object, Field)
+}
+
+RowBuilder --> Headers
+RowBuilder --> Row : builds
+Row --> Headers
+Field --> FieldType
+'FieldType --> Field : uses
+
+FieldType ..> DecimalSpec
+FieldType ..> DateSpec
+FieldType ..> DateTimeSpec
+
+Field ..> DecimalSpec
+Field ..> DateSpec
+Field ..> DateTimeSpec
+Field ..> ValidationError
+}
+@enduml
