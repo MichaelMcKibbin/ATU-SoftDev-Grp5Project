@@ -877,4 +877,200 @@ class CsvReaderTest {
         }
     }
 
+@Test
+    void testReadRowAsTableRow_WithData() throws IOException {
+        String csvData = "Name,Age,City\nJohn,30,NYC\nJane,25,LA";
+        CsvReader reader = new CsvReader(new StringReader(csvData));
+
+        // First row should be data (header is consumed)
+        String tableRow = reader.readRowAsTableRow();
+        assertNotNull(tableRow);
+        assertTrue(tableRow.contains("John"));
+        assertTrue(tableRow.contains("30"));
+        assertTrue(tableRow.contains("NYC"));
+        assertTrue(tableRow.startsWith("|"));
+        assertTrue(tableRow.endsWith("|"));
+
+        reader.close();
+    }
+
+    @Test
+    void testReadRowAsTableRow_EndOfFile() throws IOException {
+        String csvData = "Name,Age\nJohn,30";
+        CsvReader reader = new CsvReader(new StringReader(csvData));
+
+        // Read first row
+        assertNotNull(reader.readRowAsTableRow());
+
+        // Try to read beyond end
+        assertNull(reader.readRowAsTableRow());
+
+        reader.close();
+    }
+
+    @Test
+    void testReadAllAsTable_WithHeaders() throws IOException {
+        String csvData = "Name,Age,City\nJohn,30,NYC\nJane,25,LA\nBob,35,Chicago";
+        CsvReader reader = new CsvReader(new StringReader(csvData));
+
+        String table = reader.readAllAsTable();
+
+        assertNotNull(table);
+
+        // Should contain separators
+        assertTrue(table.contains("+"));
+        assertTrue(table.contains("-"));
+
+        // Should contain headers
+        assertTrue(table.contains("Name"));
+        assertTrue(table.contains("Age"));
+        assertTrue(table.contains("City"));
+
+        // Should contain all data
+        assertTrue(table.contains("John"));
+        assertTrue(table.contains("Jane"));
+        assertTrue(table.contains("Bob"));
+        assertTrue(table.contains("NYC"));
+        assertTrue(table.contains("LA"));
+        assertTrue(table.contains("Chicago"));
+
+        // Should have multiple rows
+        String[] lines = table.split("\n");
+        assertTrue(lines.length > 5); // At least: top sep, header, header sep, 3 data rows, bottom sep
+
+        reader.close();
+    }
+
+    @Test
+    void testReadAllAsTable_WithoutHeaders() throws IOException {
+        String csvData = "John,30,NYC\nJane,25,LA";
+        CsvConfig config = new CsvConfig.Builder()
+                .setHasHeader(false)
+                .build();
+        CsvReader reader = new CsvReader(new StringReader(csvData), config);
+
+        String table = reader.readAllAsTable();
+
+        assertNotNull(table);
+        assertTrue(table.contains("John"));
+        assertTrue(table.contains("Jane"));
+
+        reader.close();
+    }
+
+    @Test
+    void testReadAllAsTable_EmptyFile() throws IOException {
+        String csvData = "";
+        CsvReader reader = new CsvReader(new StringReader(csvData));
+
+        String table = reader.readAllAsTable();
+
+        assertEquals("", table);
+
+        reader.close();
+    }
+
+    @Test
+    void testReadAllAsTable_OnlyHeaders() throws IOException {
+        String csvData = "Name,Age,City";
+        CsvReader reader = new CsvReader(new StringReader(csvData));
+
+        String table = reader.readAllAsTable();
+
+        // When there are only headers with no data rows, readAll() returns empty list
+        // So the table will be empty
+        assertNotNull(table);
+        assertEquals("", table);
+
+        reader.close();
+    }
+
+    @Test
+    void testReadAllAsTable_ColumnAlignment() throws IOException {
+        String csvData = "Name,Age,City\nJohn Smith,30,New York City\nJo,5,LA";
+        CsvReader reader = new CsvReader(new StringReader(csvData));
+
+        String table = reader.readAllAsTable();
+
+        // All columns in each row should have the same width
+        String[] lines = table.split("\n");
+
+        // Find data rows (skip separators)
+        int firstDataRowIdx = -1;
+        int secondDataRowIdx = -1;
+
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].contains("John Smith")) {
+                firstDataRowIdx = i;
+            } else if (lines[i].contains("Jo") && !lines[i].contains("John")) {
+                secondDataRowIdx = i;
+            }
+        }
+
+        assertTrue(firstDataRowIdx > 0);
+        assertTrue(secondDataRowIdx > 0);
+
+        // Both rows should have the same length (properly aligned)
+        assertEquals(lines[firstDataRowIdx].length(), lines[secondDataRowIdx].length());
+
+        reader.close();
+    }
+
+    @Test
+    void testReadAllAsTable_SpecialCharacters() throws IOException {
+        String csvData = "Name,Symbol\nPipe,|\nPlus,+\nDash,-";
+        CsvReader reader = new CsvReader(new StringReader(csvData));
+
+        String table = reader.readAllAsTable();
+
+        assertNotNull(table);
+        assertTrue(table.contains("Pipe"));
+        assertTrue(table.contains("Plus"));
+        assertTrue(table.contains("Dash"));
+
+        reader.close();
+    }
+
+    @Test
+    void testReadRowAsTableRow_MultipleConsecutiveCalls() throws IOException {
+        String csvData = "Name,Age\nJohn,30\nJane,25\nBob,35";
+        CsvReader reader = new CsvReader(new StringReader(csvData));
+
+        String row1 = reader.readRowAsTableRow();
+        String row2 = reader.readRowAsTableRow();
+        String row3 = reader.readRowAsTableRow();
+        String row4 = reader.readRowAsTableRow();
+
+        assertNotNull(row1);
+        assertNotNull(row2);
+        assertNotNull(row3);
+        assertNull(row4); // End of file
+
+        assertTrue(row1.contains("John"));
+        assertTrue(row2.contains("Jane"));
+        assertTrue(row3.contains("Bob"));
+
+        reader.close();
+    }
+
+    @Test
+    void testReadAllAsTable_FromFile(@TempDir Path tempDir) throws IOException {
+        // Create a temporary CSV file
+        Path csvFile = tempDir.resolve("test.csv");
+        String content = "Product,Price,Stock\nLaptop,999.99,10\nMouse,29.99,50\nKeyboard,79.99,25";
+        Files.writeString(csvFile, content);
+
+        CsvReader reader = CsvReader.fromPath(csvFile);
+        String table = reader.readAllAsTable();
+
+        assertNotNull(table);
+        assertTrue(table.contains("Product"));
+        assertTrue(table.contains("Laptop"));
+        assertTrue(table.contains("999.99"));
+
+        reader.close();
+    }
+
+
+    
 }
