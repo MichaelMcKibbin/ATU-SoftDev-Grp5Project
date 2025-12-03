@@ -113,7 +113,7 @@ public class Main {
 //            System.out.println("Error reading CSV: " + e.getMessage());
 //        }
 //    }
-    private static void demoRead(String filePath, CsvConfig config, Headers headers, long maxLines) {
+private static void demoRead(String filePath, CsvConfig config, Headers headers, long maxLines) {
         Path path = Path.of(filePath);
 
         try (CsvReader reader = CsvReader.fromPath(path, config, headers)) {
@@ -132,10 +132,23 @@ public class Main {
             lastHeaders = effectiveHeaders;
 
             System.out.printf("Read %d rows.%n", rows.size());
-            if (maxLines < 0)
-                rows.forEach(System.out::println);
-            else
-                rows.stream().limit(maxLines).forEach(System.out::println);
+
+            // Use CsvTableFormatter to display the data as a table
+            if (!rows.isEmpty()) {
+                CsvTableFormatter formatter = new CsvTableFormatter(reader);
+
+                // If maxLines is specified, only show limited rows
+                List<Row> rowsToDisplay = maxLines < 0 ? rows :
+                        rows.stream().limit(maxLines).toList();
+
+                String table = formatter.formatTable(rowsToDisplay);
+                System.out.println(table);
+
+                // Show message if rows were truncated
+                if (maxLines >= 0 && rows.size() > maxLines) {
+                    System.out.printf("(Showing first %d of %d rows)%n", maxLines, rows.size());
+                }
+            }
 
         } catch (Exception e) {
             System.out.println("Error reading CSV: " + e.getMessage());
