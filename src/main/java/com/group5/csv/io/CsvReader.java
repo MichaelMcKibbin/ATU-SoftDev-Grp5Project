@@ -533,6 +533,150 @@ public class CsvReader implements Closeable, Iterable<Row> {
 //        }
 //        System.out.println();
 //    }
+
+
+ public String readRowAsTableRow() throws IOException {
+        Row row = this.readRow();
+        if (row == null) {
+            return null;
+        }
+        return formatRowAsCells(row);
+    }
+
+    /**
+     * Reads all rows and formats them as a complete table
+     * @return A formatted string representing the entire CSV as a table
+     * @throws IOException if an I/O error occurs
+     */
+    public String readAllAsTable() throws IOException {
+        StringBuilder table = new StringBuilder();
+        List<Row> rows = this.readAll();
+
+        if (rows.isEmpty()) {
+            return "";
+        }
+
+        // Calculate column widths
+        int[] columnWidths = calculateColumnWidths(rows);
+
+        // Add header separator
+        table.append(createSeparator(columnWidths)).append("\n");
+
+        // Add header if present
+        if (this.headers != null) {
+            table.append(formatRowAsCells(this.headers.getColumnNames(), columnWidths)).append("\n");
+            table.append(createSeparator(columnWidths)).append("\n");
+        }
+
+        // Add data rows
+        for (Row row : rows) {
+            table.append(formatRowAsCells(row, columnWidths)).append("\n");
+        }
+
+        // Add bottom separator
+        table.append(createSeparator(columnWidths));
+
+        return table.toString();
+    }
+
+    /**
+     * Formats a row as cells with fixed column widths
+     */
+    private String formatRowAsCells(Row row, int[] columnWidths) {
+        List<String> values = new ArrayList<>();
+        for (int i = 0; i < columnWidths.length; i++) {
+            values.add(row.get(i));
+        }
+        return formatRowAsCells(values, columnWidths);
+    }
+
+    /**
+     * Formats a list of strings as cells with fixed column widths
+     */
+    private String formatRowAsCells(List<String> values, int[] columnWidths) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("|");
+
+        for (int i = 0; i < values.size(); i++) {
+            String value = values.get(i);
+            int width = columnWidths[i];
+            sb.append(" ").append(padRight(value, width)).append(" |");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Formats a row with dynamic width (auto-sizing to content)
+     */
+    private String formatRowAsCells(Row row) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("|");
+
+        for (int i = 0; i < row.size(); i++) {
+            String value = row.get(i);
+            sb.append(" ").append(value).append(" |");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Creates a separator line for the table
+     */
+    private String createSeparator(int[] columnWidths) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("+");
+
+        for (int width : columnWidths) {
+            sb.append("-".repeat(width + 2)).append("+");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Calculates the maximum width needed for each column
+     */
+    private int[] calculateColumnWidths(List<Row> rows) {
+        if (rows.isEmpty()) {
+            return new int[0];
+        }
+
+        int columnCount = rows.get(0).size();
+        int[] widths = new int[columnCount];
+
+        // Check header widths if present
+        if (this.headers != null) {
+            List<String> headerNames = this.headers.getColumnNames();
+            for (int i = 0; i < headerNames.size(); i++) {
+                widths[i] = headerNames.get(i).length();
+            }
+        }
+
+        // Check data widths
+        for (Row row : rows) {
+            for (int i = 0; i < row.size(); i++) {
+                String value = row.get(i);
+                widths[i] = Math.max(widths[i], value.length());
+            }
+        }
+
+        return widths;
+    }
+
+    /**
+     * Pads a string to the right with spaces
+     */
+    private String padRight(String s, int length) {
+        if (s.length() >= length) {
+            return s;
+        }
+        return s + " ".repeat(length - s.length());
+    }
+
+
+
     
 }
 
