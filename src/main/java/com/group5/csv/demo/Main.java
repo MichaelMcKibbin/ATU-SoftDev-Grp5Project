@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
+import com.group5.csv.io.CsvTableFormatter;
 /**
  * Console-based demo entry point for the CSV Data Processor project.
  * <p>
@@ -132,10 +132,23 @@ public class Main {
             lastHeaders = effectiveHeaders;
 
             System.out.printf("Read %d rows.%n", rows.size());
-            if (maxLines < 0)
-                rows.forEach(System.out::println);
-            else
-                rows.stream().limit(maxLines).forEach(System.out::println);
+
+            // Use CsvTableFormatter to display the data as a table
+            if (!rows.isEmpty()) {
+                CsvTableFormatter formatter = new CsvTableFormatter(reader);
+
+                // If maxLines is specified, only show limited rows
+                List<Row> rowsToDisplay = maxLines < 0 ? rows :
+                        rows.stream().limit(maxLines).toList();
+
+                String table = formatter.formatTable(rowsToDisplay, effectiveHeaders);
+                System.out.println(table);
+
+                // Show message if rows were truncated
+                if (maxLines >= 0 && rows.size() > maxLines) {
+                    System.out.printf("(Showing first %d of %d rows)%n", maxLines, rows.size());
+                }
+            }
 
         } catch (Exception e) {
             System.out.println("Error reading CSV: " + e.getMessage());
