@@ -2,9 +2,11 @@ package com.group5.csv.io;
 
 import com.group5.csv.core.Row;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.*;
+import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * without loss or corruption.
  */
 public class CsvRoundTripTest {
+
+    @TempDir
+    Path tempDir;
 
     /**
      * Default round-trip test using standard CSV configuration.
@@ -170,7 +175,6 @@ public class CsvRoundTripTest {
         runRoundTripTest(data, config);
     }
 
-
     /**
      * Runs a round-trip test using default CSV configuration.
      *
@@ -191,7 +195,6 @@ public class CsvRoundTripTest {
         runRoundTripTest(data, config, expected);
     }
 
-
     /**
      * Runs a complete CSV round-trip:
      * input file -> CsvReader -> CsvWriter -> CsvReader -> compare results
@@ -199,16 +202,21 @@ public class CsvRoundTripTest {
      * @param data   Raw CSV lines to test
      * @param config Custom CSV configuration
      */
-    private void runRoundTripTest(List<String> data, CsvConfig config, int expectedRowCount) throws Exception {
-        File input = File.createTempFile("input", ".csv");
-        File output = File.createTempFile("output", ".csv");
+    private void runRoundTripTest(List<String> data, CsvConfig config, int expectedRowCount) throws Exception
+    {
+        // Use tempDir to create files safely
+        File input = tempDir.resolve("input.csv").toFile();
+        File output = tempDir.resolve("output.csv").toFile();
 
+        // Write initial CSV content
         Files.write(input.toPath(), data);
 
+        // Read -> Write -> Read
         List<Row> originalRows = readRows(input, config);
         writeRows(output, originalRows, config);
         List<Row> finalRows = readRows(output, config);
 
+        // Assertions
         assertEquals(expectedRowCount, originalRows.size(),
                 "Row count mismatch after first read");
         assertEquals(originalRows.size(), finalRows.size(),

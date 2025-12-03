@@ -1,6 +1,7 @@
 package com.group5.csv.io;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,15 +9,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class InputStreamDetectorTest {
 
+    @TempDir
+    Path tempDir;
+
     // ---- Helper to create temp file with raw bytes ----
     private File createTempFile(byte[] bytes) throws IOException {
-        File temp = File.createTempFile("bomtest", ".csv");
-        temp.deleteOnExit();
+        File temp = tempDir.resolve("bomtest.csv").toFile();
         try (FileOutputStream fos = new FileOutputStream(temp)) {
             fos.write(bytes);
         }
@@ -44,8 +48,10 @@ class InputStreamDetectorTest {
 
         var r = InputStreamDetector.detect(f, StandardCharsets.UTF_8);
 
-        assertEquals(StandardCharsets.UTF_8, r.charset);
-        assertArrayEquals(content, readAll(r.stream)); // BOM removed
+        try (InputStream in = r.stream) {
+            assertEquals(StandardCharsets.UTF_8, r.charset);
+            assertArrayEquals(content, readAll(in)); // BOM removed
+        }
     }
 
     @Test
@@ -56,8 +62,10 @@ class InputStreamDetectorTest {
 
         var r = InputStreamDetector.detect(f, StandardCharsets.UTF_16LE);
 
-        assertEquals(StandardCharsets.UTF_16LE, r.charset);
-        assertArrayEquals(content, readAll(r.stream)); // BOM removed
+        try (InputStream in = r.stream) {
+            assertEquals(StandardCharsets.UTF_16LE, r.charset);
+            assertArrayEquals(content, readAll(r.stream)); // BOM removed
+        }
     }
 
     @Test
@@ -68,8 +76,10 @@ class InputStreamDetectorTest {
 
         var r = InputStreamDetector.detect(f, StandardCharsets.UTF_16BE);
 
-        assertEquals(StandardCharsets.UTF_16BE, r.charset);
-        assertArrayEquals(content, readAll(r.stream)); // BOM removed
+        try (InputStream in = r.stream) {
+            assertEquals(StandardCharsets.UTF_16BE, r.charset);
+            assertArrayEquals(content, readAll(r.stream)); // BOM removed
+        }
     }
 
     @Test
@@ -80,8 +90,10 @@ class InputStreamDetectorTest {
 
         var r = InputStreamDetector.detect(f, StandardCharsets.UTF_8); // request ANY UTF to trigger detection
 
-        assertEquals(Charset.forName("UTF-32LE"), r.charset);
-        assertArrayEquals(content, readAll(r.stream)); // BOM removed
+        try (InputStream in = r.stream) {
+            assertEquals(Charset.forName("UTF-32LE"), r.charset);
+            assertArrayEquals(content, readAll(r.stream)); // BOM removed
+        }
     }
 
     @Test
@@ -92,8 +104,10 @@ class InputStreamDetectorTest {
 
         var r = InputStreamDetector.detect(f, StandardCharsets.UTF_8);
 
-        assertEquals(Charset.forName("UTF-32BE"), r.charset);
-        assertArrayEquals(content, readAll(r.stream));
+        try (InputStream in = r.stream) {
+            assertEquals(Charset.forName("UTF-32BE"), r.charset);
+            assertArrayEquals(content, readAll(r.stream));
+        }
     }
 
     @Test
@@ -103,8 +117,10 @@ class InputStreamDetectorTest {
 
         var r = InputStreamDetector.detect(f, StandardCharsets.UTF_8);
 
-        assertEquals(StandardCharsets.UTF_8, r.charset); // same as requested
-        assertArrayEquals(content, readAll(r.stream));    // no bytes skipped
+        try (InputStream in = r.stream) {
+            assertEquals(StandardCharsets.UTF_8, r.charset); // same as requested
+            assertArrayEquals(content, readAll(r.stream));    // no bytes skipped
+        }
     }
 
     @Test
@@ -116,7 +132,9 @@ class InputStreamDetectorTest {
         // Expect: No BOM detection, full file including BOM is returned
         var r = InputStreamDetector.detect(f, StandardCharsets.ISO_8859_1);
 
-        assertEquals(StandardCharsets.ISO_8859_1, r.charset); // unchanged
-        assertArrayEquals(concat(bomUtf8, content), readAll(r.stream));
+        try (InputStream in = r.stream) {
+            assertEquals(StandardCharsets.ISO_8859_1, r.charset); // unchanged
+            assertArrayEquals(concat(bomUtf8, content), readAll(r.stream));
+        }
     }
 }
