@@ -1,0 +1,193 @@
+@startuml
+' CSV Library General Class Diagram (enhanced with interfaces)
+
+interface Iterable<T> {
+    +iterator() : Iterator<T>
+}
+
+interface Closeable {
+    +close()
+}
+
+class CsvReader {
+    -final CsvConfig config
+    -final CsvParser parser
+    +static fromPath(Path path) : CsvReader
+    +static fromPath(Path path, CsvConfig config) : CsvReader
+    +static fromPath(Path path, CsvConfig config, CsvHeaders headers) : CsvReader
+    + CsvReader(Reader reader, CsvConfig config)
+    + CsvReader(Reader reader, CsvConfig config, Headers headers)
+    +getConfig(): CsvConfig
+    +getParser(): CsvParser
+    +readRow() : Row
+    +readAll() : List<Row>
+    +getLastRowWarning(): CsvWarning
+    +iterator() : Iterator<Row>
+    +spliterator() : Spliterator<Row>
+    +close()
+}
+
+class CsvWarning {
+    +line() : long
+    +type() : Type
+    +message() : String
+}
+
+class CsvWriter {
+    -final CsvConfig config
+    -final printer: CsvPrinter
+    +static toPath(Path path, CsvConfig config) : CsvWriter
+    + CsvWriter(OutputStream out, CsvConfig config)
+    +getConfig(): CsvConfig
+    +writeHeader(List<String> headerCells)
+    +writeRow(List<?> values)
+    +writeRow(Row row)
+    +writeAllRows(Iterable<Row> rows)
+    +writeAll(Iterable<? extends List<?>> rows)
+    +flush()
+    +close()
+}
+
+'class CsvStream {
+'    -reader : CsvReader
+'    +static from(CsvReader reader) : CsvStream
+'    +static fromPath(Path path, CsvConfig config) : CsvStream
+'    +static fromPath(Path path, CsvConfig config, Headers headers) : CsvStream
+'    +stream() : Stream<Row>
+'    +close()
+'}
+
+class CsvParser {
+    -final CsvFormat format
+    +CsvParser(CsvFormat format, Reader reader)
+    +getFormat() : CsvFormat
+    +readRow() : List<String>
+}
+
+class CsvPrinter {
+    -final format : CsvFormat
+    + CsvPrinter(Writer out, CsvFormat fmt)
+    +printRow(List<String> cells)
+    +close()
+    +flush()
+}
+
+'class Row {
+'    +getValues() : List<String>
+'    +getHeaders() : Headers
+'    +get(String columnName): String
+'    +get(int index): String
+'    +size(): int
+'    +isEmpty(): boolean
+'}
+
+'class Headers {
+'    +getColumnNames() : List<String>
+'    +getIndex(String columnName) : int
+'    +getName(int index): String
+'    +public boolean contains(String columnName) : boolean
+'    +size(): int
+'}
+
+'class RowBuilder {
+'    + static RowBuilder forHeaders(Headers headers)
+'    + Headers getHeaders()
+'    + RowBuilder add(String value)
+'    + RowBuilder addAll(List<String> values)
+'    + RowBuilder set(int index, String value)
+'    + RowBuilder set(String columnName, String value)
+'    + int size()
+'    + boolean isComplete()
+'    + List<String> getValues()
+'    + void clear()
+'    + Row build()
+'}
+
+class CsvConfig {
+    +builder() : CsvConfig.Builder
+    +hasHeader() : boolean
+    +isRequireUniformFieldCount() : boolean
+    +isSkipEmptyLines() : boolean
+    +getCharset() : Charset
+    +isWriteBOM() : boolean
+    +getReadBufSize() : int
+    +getFormat() : CsvFormat
+    +setSkipEmptyLines(boolean)
+    +setWriteBOM(boolean)
+}
+
+class CsvFormat {
+    ' Builder access
+    +static builder() : CsvFormat.Builder
+    ' Presets
+    +static rfc4180() : CsvFormat
+    +static excel() : CsvFormat
+    +static excel_semicolon() : CsvFormat
+    +static json_csv() : CsvFormat
+    +static tsv() : CsvFormat
+    ' Fields
+    +final char delimiter
+    +final char quoteChar
+    +final String newline
+    +final boolean alwaysQuote
+    +final char escapeChar
+    +final boolean doubleQuoteEnabled
+    +final boolean allowUnescapedQuotes
+    +final boolean allowUnbalancedQuotes
+    +final boolean trimUnquotedFields
+    +final boolean skipWhitespaceAroundQuotes
+}
+
+'class RowBuilder {
+'    --
+'    + static RowBuilder forHeaders(Headers headers)
+'    + Headers getHeaders()
+'    + RowBuilder add(String value)
+'    + RowBuilder addAll(List<String> values)
+'    + RowBuilder set(int index, String value)
+'    + RowBuilder set(String columnName, String value)
+'    + int size()
+'    + boolean isComplete()
+'    + List<String> getValues()
+'    + void clear()
+'    + Row build()
+'}
+
+class ParseException {
+    +getLine() : long
+    +getColumn() : long
+    +getMessage():String
+}
+
+ParseException <|-- RuntimeException
+
+CsvReader ..> ParseException : throws
+CsvParser ..> ParseException : throws
+
+' Associations
+'CsvStream --> CsvReader
+'CsvReader --> Row : reads
+'CsvReader --> RowBuilder
+'CsvWriter --> Row : writes
+'Row --> Headers
+CsvReader --> CsvConfig
+CsvWriter --> CsvConfig
+CsvConfig --> CsvFormat
+'RowBuilder --> Headers
+'RowBuilder ..> Row : constructs
+CsvReader "1" *-- "0..*" CsvWarning : warnings
+
+' Parser / Printer
+CsvReader --> CsvParser
+CsvWriter --> CsvPrinter
+CsvParser --> CsvFormat
+CsvPrinter --> CsvFormat
+
+
+' Interfaces implementation
+CsvReader ..|> Iterable
+CsvReader ..|> Closeable
+CsvWriter ..|> Closeable
+'CsvStream ..|> Closeable
+
+@enduml

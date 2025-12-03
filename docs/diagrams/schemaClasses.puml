@@ -1,0 +1,129 @@
+@startuml
+package "schema" {
+
+class DateSpec {
+- DateTimeSpec base
+--
++ DateSpec()
++ DateSpec(DateTimeSpec)
++ LocalDate parse(String)
++ String format(LocalDate)
++ boolean isValid(String)
++ DateTimeSpec getBase()
+}
+
+class TimeSpec {
+- DateTimeSpec base
+--
++ TimeSpec()
++ TimeSpec(DateTimeSpec)
++ LocalTime parse(String)
++ String format(LocalTime)
++ boolean isValid(String)
++ DateTimeSpec getBase()
+}
+
+class DecimalSpec {
+- int scale
+- Integer precision
+- RoundingMode rounding
+- boolean allowBlank
+- BigDecimal min
+- BigDecimal max
+- Locale locale
+--
++ static DecimalSpecBuilder builder()
++ BigDecimal parse(String)
++ String format(BigDecimal)
+}
+
+class DecimalSpecBuilder <<static>> {
+- int scale
+- Integer precision
+- RoundingMode rounding
+- boolean allowBlank
+- BigDecimal min
+- BigDecimal max
+- Locale locale
+--
++ scale(int)
++ precision(Integer)
++ rounding(RoundingMode)
++ allowBlank(boolean)
++ min(BigDecimal)
++ max(BigDecimal)
++ locale(Locale)
++ build() : DecimalSpec
+}
+
+class DateTimeSpec {
+- List<DateTimeFormatter> formatters
+- Locale locale
+- ZoneId zone
+- boolean strict
+- boolean allowBlank
+- MissingPartPolicy missingPartPolicy
+--
++ LocalDateTime parse(String)
++ String format(LocalDateTime)
++ boolean isValid(String)
++ static DateTimeSpec ofPattern(String)
++ static DateTimeSpec ofPresets(String...)
+}
+
+enum MissingPartPolicy {
+DEFAULTS
+REQUIRE_FULL
+}
+
+class DateTimeSpecBuilder <<static>> {
+- List<DateTimeFormatter> fmts
+- Locale locale
+- ZoneId zone
+- boolean strict
+- boolean allowBlank
+- MissingPartPolicy missingPartPolicy
+--
++ acceptPatterns(String...)
++ acceptPresets(String...)
++ locale(Locale)
++ zone(ZoneId)
++ strict(boolean)
++ allowBlank(boolean)
++ missingPartPolicy(MissingPartPolicy)
++ build(): DateTimeSpec
+}
+
+class DateTimeSpecPresets <<static>> {
++ byName(String, Locale, boolean) : DateTimeFormatter
+}
+
+class Validators <<utility>> {
++ required() : Validator<Object>
++ min(BigDecimal) : Validator<BigDecimal>
++ max(BigDecimal) : Validator<BigDecimal>
++ length(int, int) : Validator<String>
++ regex(String) : Validator<String>
++ enumOf(String...) : Validator<String>
++ custom(Predicate<T>, String) : Validator<T>
++ and(Validator<T>...) : Validator<T>
++ or(Validator<T>...) : Validator<T>
++ not(Validator<T>, String) : Validator<T>
++ validateAll(T, List<Validator<T>>, List<String>)
+}
+
+interface Validator<T> {
++ validate(T)
+}
+
+DateSpec --> DateTimeSpec : wraps
+TimeSpec --> DateTimeSpec : wraps
+
+DecimalSpec --> DecimalSpecBuilder : built by
+DateTimeSpec --> DateTimeSpecBuilder : built by
+DateTimeSpec --> DateTimeSpecPresets : uses
+DateTimeSpec --> MissingPartPolicy
+
+Validators --> Validator
+}
+@enduml
