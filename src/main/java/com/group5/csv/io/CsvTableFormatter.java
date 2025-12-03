@@ -1,0 +1,217 @@
+package com.group5.csv.io;
+
+import com.group5.csv.core.Headers;
+import com.group5.csv.core.Row;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Helper class for formatting CSV data as aligned tables with borders.
+ * Handles multi-line cells and uses the CsvFormat's newline character.
+ */
+public class CsvTableFormatter {
+
+    private final String newline;
+
+    /**
+     * Creates a formatter with the newline from the CsvReader's configuration
+     */
+    public CsvTableFormatter(CsvReader reader) {
+        this.newline = reader.getConfig().getFormat().newline;
+    }
+
+    /**
+     * Creates a formatter with a custom newline string
+     */
+    public CsvTableFormatter(String newline) {
+        this.newline = newline;
+    }
+
+    /**
+     * Formats a single row as table cells with borders.
+     * Handles multi-line cells by splitting them and aligning properly.
+     */
+    public String formatRow(Row row) {
+        if (row == null) {
+            return null;
+        }
+
+        // Split each cell value by the configured newline character
+        List<String[]> splitValues = new ArrayList<>();
+        int maxLines = 1;
+
+        for (int i = 0; i < row.size(); i++) {
+            String value = row.get(i);
+            if (value == null) {
+                value = "";
+            }
+            String[] lines = value.split(java.util.regex.Pattern.quote(newline), -1);
+            splitValues.add(lines);
+            maxLines = Math.max(maxLines, lines.length);
+        }
+
+        // Build the row line by line
+        StringBuilder sb = new StringBuilder();
+        for (int lineIdx = 0; lineIdx < maxLines; lineIdx++) {
+            sb.append("|");
+            for (int colIdx = 0; colIdx < row.size(); colIdx++) {
+                String[] cellLines = splitValues.get(colIdx);
+                String lineContent = lineIdx < cellLines.length ? cellLines[lineIdx] : "";
+                sb.append(" ").append(lineContent).append(" |");
+            }
+            if (lineIdx < maxLines - 1) {
+                sb.append(newline);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Formats all rows as a complete table with proper alignment and separators
+     */
+    public String formatTable(List<Row> rows) {
+        if (rows.isEmpty()) {
+            return "";
+        }
+        Headers headers = rows.get(0).getHeaders();
+        StringBuilder table = new StringBuilder();
+
+        // Calculate column widths
+        int[] columnWidths = calculateColumnWidths(rows, headers);
+
+        // Add top separator
+        table.append(createSeparator(columnWidths)).append(newline);
+
+        // Add header if present
+        if (headers != null) {
+            table.append(formatRowWithWidths(headers.getColumnNames(), columnWidths)).append(newline);
+            table.append(createSeparator(columnWidths)).append(newline);
+        }
+
+        // Add data rows
+        for (Row row : rows) {
+            table.append(formatRowWithWidths(row, columnWidths)).append(newline);
+        }
+
+        // Add bottom separator
+        table.append(createSeparator(columnWidths));
+
+        return table.toString();
+    }
+
+    /**
+     * Formats a row with fixed column widths, handling multi-line content
+     */
+    private String formatRowWithWidths(Row row, int[] columnWidths) {
+        List<String> values = new ArrayList<>();
+        for (int i = 0; i < row.size(); i++) {
+            values.add(row.get(i));
+        }
+        return formatRowWithWidths(values, columnWidths);
+    }
+
+    /**
+     * Formats a list of strings as cells with fixed column widths, handling multi-line content
+     */
+    private String formatRowWithWidths(List<String> values, int[] columnWidths) {
+        // Split each cell value by the configured newline character
+        List<String[]> splitValues = new ArrayList<>();
+        int maxLines = 1;
+
+        for (String value : values) {
+            if (value == null) {
+                value = "";
+            }
+            String[] lines = value.split(java.util.regex.Pattern.quote(newline), -1);
+            splitValues.add(lines);
+            maxLines = Math.max(maxLines, lines.length);
+        }
+
+        // Build the row line by line
+        StringBuilder sb = new StringBuilder();
+        for (int lineIdx = 0; lineIdx < maxLines; lineIdx++) {
+            sb.append("|");
+            for (int colIdx = 0; colIdx < values.size(); colIdx++) {
+                String[] cellLines = splitValues.get(colIdx);
+                String lineContent = lineIdx < cellLines.length ? cellLines[lineIdx] : "";
+                int width = columnWidths[colIdx];
+                sb.append(" ").append(padRight(lineContent, width)).append(" |");
+            }
+            if (lineIdx < maxLines - 1) {
+                sb.append(newline);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Creates a separator line for the table
+     */
+    private String createSeparator(int[] columnWidths) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("+");
+
+        for (int width : columnWidths) {
+            sb.append("-".repeat(width + 2)).append("+");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Calculates the maximum width needed for each column, considering multi-line content
+     */
+    private int[] calculateColumnWidths(List<Row> rows, Headers headers) {
+        if (rows.isEmpty()) {
+            return new int[0];
+        }
+
+        int columnCount = rows.get(0).size();
+        int[] widths = new int[columnCount];
+
+        // Check header widths if present
+        if (headers != null) {
+            List<String> headerNames = headers.getColumnNames();
+            for (int i = 0; i < headerNames.size(); i++) {
+                String headerName = headerNames.get(i);
+                if (headerName == null) {
+                    headerName = "";
+                }
+                // For headers with newlines, find the longest line
+                String[] lines = headerName.split(java.util.regex.Pattern.quote(newline), -1);
+                for (String line : lines) {
+                    widths[i] = Math.max(widths[i], line.length());
+                }
+            }
+        }
+
+        // Check data widths
+        for (Row row : rows) {
+            for (int i = 0; i < row.size(); i++) {
+                String value = row.get(i);
+                if (value == null) {
+                    value = "";
+                }
+                // For cells with newlines, find the longest line
+                String[] lines = value.split(java.util.regex.Pattern.quote(newline), -1);
+                for (String line : lines) {
+                    widths[i] = Math.max(widths[i], line.length());
+                }
+            }
+        }
+
+        return widths;
+    }
+
+    /**
+     * Pads a string to the right with spaces
+     */
+    private String padRight(String s, int length) {
+        if (s.length() >= length) {
+            return s;
+        }
+        return s + " ".repeat(length - s.length());
+    }
+}
