@@ -1,6 +1,5 @@
 package com.group5.csv.io;
 
-
 import com.group5.csv.core.Row;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -20,48 +19,43 @@ import static org.junit.jupiter.api.Assertions.*;
 class CsvTableFormatterTest {
 
     @Test
-    void testFormatRow_SimpleData() throws IOException {
+    void testFormatTable_SimpleData() throws IOException {
         String csvData = "Name,Age,City\nJohn,30,NYC";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
-        Row row = reader.readRow();
-        String formatted = formatter.formatRow(row);
+        List<Row> rows = reader.readAll();
+        String table = formatter.formatTable(rows, -1);
 
-        assertNotNull(formatted);
-        assertTrue(formatted.contains("John"));
-        assertTrue(formatted.contains("30"));
-        assertTrue(formatted.contains("NYC"));
-        assertTrue(formatted.startsWith("|"));
-        assertTrue(formatted.endsWith("|"));
+        assertNotNull(table);
+        assertTrue(table.contains("John"));
+        assertTrue(table.contains("30"));
+        assertTrue(table.contains("NYC"));
+        assertTrue(table.contains("|"));
 
         reader.close();
     }
 
     @Test
-    void testFormatRow_NullRow() {
+    void testFormatTable_NullList() {
         CsvTableFormatter formatter = new CsvTableFormatter("\n");
-        String formatted = formatter.formatRow(null);
-        assertNull(formatted);
+        String formatted = formatter.formatTable(null, -1);
+        assertEquals("", formatted);
     }
 
     @Test
-    void testFormatRow_WithMultilineCell() throws IOException {
+    void testFormatTable_WithMultilineCell() throws IOException {
         String csvData = "Name,Description\nProduct,\"Line 1\nLine 2\nLine 3\"";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
-        Row row = reader.readRow();
-        String formatted = formatter.formatRow(row);
+        List<Row> rows = reader.readAll();
+        String table = formatter.formatTable(rows, -1);
 
-        assertNotNull(formatted);
-        assertTrue(formatted.contains("Line 1"));
-        assertTrue(formatted.contains("Line 2"));
-        assertTrue(formatted.contains("Line 3"));
-
-        // Should have 2 newlines (for 3 lines)
-        long newlineCount = formatted.chars().filter(ch -> ch == '\n').count();
-        assertEquals(2, newlineCount);
+        assertNotNull(table);
+        assertTrue(table.contains("Line 1"));
+        assertTrue(table.contains("Line 2"));
+        assertTrue(table.contains("Line 3"));
 
         reader.close();
     }
@@ -70,10 +64,10 @@ class CsvTableFormatterTest {
     void testFormatTable_WithHeaders() throws IOException {
         String csvData = "Name,Age,City\nJohn,30,NYC\nJane,25,LA\nBob,35,Chicago";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
 
@@ -104,10 +98,10 @@ class CsvTableFormatterTest {
                 .setHasHeader(false)
                 .build();
         CsvReader reader = new CsvReader(new StringReader(csvData), config);
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("John"));
@@ -119,7 +113,7 @@ class CsvTableFormatterTest {
     @Test
     void testFormatTable_EmptyList() {
         CsvTableFormatter formatter = new CsvTableFormatter("\n");
-        String table = formatter.formatTable(new ArrayList<>());
+        String table = formatter.formatTable(new ArrayList<>(), -1);
         assertEquals("", table);
     }
 
@@ -127,10 +121,10 @@ class CsvTableFormatterTest {
     void testFormatTable_ColumnAlignment() throws IOException {
         String csvData = "Name,Age,City\nJohn Smith,30,New York City\nJo,5,LA";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         // All rows should have consistent structure
         String[] lines = table.split("\n");
@@ -159,10 +153,10 @@ class CsvTableFormatterTest {
     void testFormatTable_WithMultilineCells() throws IOException {
         String csvData = "Name,Address,Phone\nJohn,\"123 Main St\nApt 4B\nNew York, NY\",555-1234";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("123 Main St"));
@@ -177,10 +171,10 @@ class CsvTableFormatterTest {
     void testFormatTable_MultipleRowsWithMultilineCells() throws IOException {
         String csvData = "Col1,Col2,Col3\n\"A\nB\",X,Y\nC,\"D\nE\nF\",Z";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("A"));
@@ -193,18 +187,9 @@ class CsvTableFormatterTest {
     }
 
     @Test
-    void testConstructor_WithReader() throws IOException {
-        String csvData = "Name,Age\nJohn,30";
-        CsvReader reader = new CsvReader(new StringReader(csvData));
-
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+    void testConstructor_DefaultNewline() {
+        CsvTableFormatter formatter = new CsvTableFormatter();
         assertNotNull(formatter);
-
-        Row row = reader.readRow();
-        String formatted = formatter.formatRow(row);
-        assertNotNull(formatted);
-
-        reader.close();
     }
 
     @Test
@@ -222,7 +207,7 @@ class CsvTableFormatterTest {
         CsvTableFormatter formatter = new CsvTableFormatter("\r\n");
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("John"));
@@ -238,10 +223,10 @@ class CsvTableFormatterTest {
     void testFormatTable_SingleRow() throws IOException {
         String csvData = "Name,Age,City\nJohn,30,NYC";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("Name"));
@@ -259,10 +244,10 @@ class CsvTableFormatterTest {
     void testFormatTable_SpecialCharacters() throws IOException {
         String csvData = "Name,Symbol\nPipe,|\nPlus,+\nDash,-";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("Pipe"));
@@ -280,10 +265,10 @@ class CsvTableFormatterTest {
         Files.writeString(csvFile, content);
 
         CsvReader reader = CsvReader.fromPath(csvFile);
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("Product"));
@@ -297,10 +282,10 @@ class CsvTableFormatterTest {
     void testFormatTable_EmptyFields() throws IOException {
         String csvData = "Name,Age,City\nJohn,,NYC\n,25,\nBob,35,Chicago";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("John"));
@@ -324,10 +309,10 @@ class CsvTableFormatterTest {
     void testFormatTable_WideColumns() throws IOException {
         String csvData = "Name,Description\nProduct,\"This is a very long description that should test column width calculation\"";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
         assertTrue(table.contains("This is a very long description"));
@@ -340,21 +325,19 @@ class CsvTableFormatterTest {
     }
 
     @Test
-    void testFormatRow_MultipleColumns() throws IOException {
-        String csvData = "A,B,C,D,E,F\n1,2,3,4,5,6";
+    void testFormatTable_WithLimit() throws IOException {
+        String csvData = "Name,Age\nJohn,30\nJane,25\nBob,35\nAlice,28";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
-        Row row = reader.readRow();
-        String formatted = formatter.formatRow(row);
+        List<Row> rows = reader.readAll();
+        String table = formatter.formatTable(rows, 2);
 
-        assertNotNull(formatted);
-        assertTrue(formatted.contains("1"));
-        assertTrue(formatted.contains("6"));
-
-        // Count the number of pipes (should be 7 for 6 columns)
-        long pipeCount = formatted.chars().filter(ch -> ch == '|').count();
-        assertEquals(7, pipeCount);
+        assertNotNull(table);
+        assertTrue(table.contains("John"));
+        assertTrue(table.contains("Jane"));
+        assertFalse(table.contains("Bob"));
+        assertFalse(table.contains("Alice"));
 
         reader.close();
     }
@@ -363,29 +346,12 @@ class CsvTableFormatterTest {
     void testFormatTable_AlignmentWithMultilineAndRegularCells() throws IOException {
         String csvData = "Name,Address,Phone\nJohn,\"123 Main\nApt 4B\",555-1234\nJane,456 Oak,555-5678";
         CsvReader reader = new CsvReader(new StringReader(csvData));
-        CsvTableFormatter formatter = new CsvTableFormatter(reader);
+        CsvTableFormatter formatter = new CsvTableFormatter();
 
         List<Row> rows = reader.readAll();
-
-        // Debug: Check what's actually in the rows
-        System.out.println("Row data:");
-        for (int i = 0; i < rows.size(); i++) {
-            Row row = rows.get(i);
-            System.out.println("Row " + i + ":");
-            for (int j = 0; j < row.size(); j++) {
-                String value = row.get(j);
-                System.out.println("  Col " + j + ": [" + value + "] (contains \\n: " + value.contains("\n") + ")");
-            }
-        }
-
-        String table = formatter.formatTable(rows);
+        String table = formatter.formatTable(rows, -1);
 
         assertNotNull(table);
-
-        // Debug: Print the actual table
-        System.out.println("\nGenerated table:");
-        System.out.println(table);
-        System.out.println("---");
 
         // Verify both multi-line and single-line cells are present
         assertTrue(table.contains("John"));
