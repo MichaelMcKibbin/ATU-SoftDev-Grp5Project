@@ -529,14 +529,12 @@ Quick summary:
 
 ## Team Members
 
-| Student ID | Name |
-|-----------|------|
-| L00197067 | Michael McKibbin |
-| L00203063 | Bogdan Bondarenko |
-| L00196859 | Vivien White |
-| L00196839 | Edson Soares Ferreira |
-| L00203099 | Arron Hoare |
-| L00203051 | Abudulqurdiri Adelakun |
+- Michael McKibbin
+- Bogdan Bondarenko
+- Vivien White
+- Edson Soares Ferreira
+- Arron Hoare
+- Abudulqurdiri Adelakun
 
 ## License
 
