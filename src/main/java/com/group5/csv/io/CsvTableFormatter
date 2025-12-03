@@ -70,11 +70,11 @@ public class CsvTableFormatter {
     /**
      * Formats all rows as a complete table with proper alignment and separators
      */
-    public String formatTable(List<Row> rows) {
+    public String formatTable(List<Row> rows, Headers headers) {
         if (rows.isEmpty()) {
             return "";
         }
-        Headers headers = rows.get(0).getHeaders();
+
         StringBuilder table = new StringBuilder();
 
         // Calculate column widths
